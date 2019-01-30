@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8">
-  <title>js-dos 6.22, Digger example</title>
+  <title>dos demo</title>
   <script src="js-dos.js"></script>
   <style>
     canvas {
@@ -17,9 +17,15 @@
   <canvas id="jsdos"></canvas>
   <script>
     Dos(document.getElementById("jsdos")).ready((fs, main) => {
-      fs.extract("pal.zip").then(() => {
-        main(["-c","pal!.exe"])
-      });
+    main([]);
+    setTimeout(()=>{
+    console.log('start')
+			fs.extract("pal.zip").then(() => {
+			console.log('exec');
+				main(["-c","pal!.exe"])
+			  	  });
+			},3000)
+      
     });
   </script>
 </body>

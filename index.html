@@ -1,33 +1,11 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-
-<head>
-  <meta charset="utf-8">
-  <title>dos demo</title>
-  <script src="js-dos.js"></script>
-  <style>
-    canvas {
-      width: 640px;
-      height: 400px;
-    }
-  </style>
-</head>
-
-<body>
-  <canvas id="jsdos"></canvas>
-  <script>
-    Dos(document.getElementById("jsdos")).ready((fs, main) => {
-    main([]);
-    setTimeout(()=>{
-    console.log('start')
-			fs.extract("pal.zip").then(() => {
-			console.log('exec');
-				main(["-c","pal!.exe"])
-			  	  });
-			},3000)
-      
-    });
-  </script>
-</body>
-
+  <head>
+    <meta charset="utf-8">
+    <title>dosbox</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="/dist/build.js"></script>
+  </body>
 </html>

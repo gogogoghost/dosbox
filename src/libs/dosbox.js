@@ -1,5 +1,5 @@
 import DB from './db'
-import gameConfig from './gameConfig'
+import gameConfig from './game.config'
 
 export default function(dom,game){
   return new Promise((resolve,reject)=>{
@@ -115,7 +115,7 @@ export default function(dom,game){
             let input=document.createElement('input');
             input.type='file';
             input.style.display='none';
-            input.addEventListener('change',(evt)=>{
+            input.addEventListener('change',()=>{
               if(input.files[0].type!='application/json'){
                 cb(0);
               }else{
@@ -150,7 +150,7 @@ export default function(dom,game){
           }
         })
         fs.extract(`${gameConfig.baseUrl}${game.name}/${game.file}`).then(() => {
-          dos.exec(['rescan']).then(res=>{
+          dos.exec(['rescan']).then(()=>{
             dos.db=new DB(game.name);
             dos.db.read().then(()=>{
               resolve(dos);

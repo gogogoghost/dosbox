@@ -37,10 +37,8 @@ export default class GameDB {
         name:this.gameName,
         files:this.gameData
       }).then(res=>{
-        console.log(res);
         resolve();
       }).catch(err=>{
-        console.log(err);
         reject();
       })
     })
@@ -55,6 +53,7 @@ export default class GameDB {
 
   /*
   * add a file
+  * buffer->arraybuffer
   * */
   add(name,buffer){
     this.gameData[name]=buffer;
@@ -62,6 +61,8 @@ export default class GameDB {
 
   /*
   * foreach
+  * provide arraybuffer
+  * need convert to Uint8array
   * */
   eachFile(cb){
     for(let key in this.gameData){

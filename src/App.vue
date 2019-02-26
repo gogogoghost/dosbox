@@ -1,7 +1,14 @@
 <template>
-  <div>
-    <canvas ref="main"></canvas>
-  </div>
+  <el-container>
+    <el-header>
+
+    </el-header>
+    <el-main>
+      <div>
+        <canvas ref="main"></canvas>
+      </div>
+    </el-main>
+  </el-container>
 </template>
 
 <script>
@@ -27,7 +34,7 @@
 
 <style lang="scss" scoped>
   canvas{
-    width:800px;
-    height:600px;
+    width:100%;
+    height:calc(50%);
   }
 </style>

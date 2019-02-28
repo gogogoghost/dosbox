@@ -1,6 +1,6 @@
 ## DOSBOX
 
-在网页玩儿DOS游戏
+在网页玩儿DOS游戏(还没开发完！！！)
 
 请[点击这里](https://dosbox.gogogoghost.site)去主页
 

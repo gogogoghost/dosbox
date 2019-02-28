@@ -1,29 +1,11 @@
-# dosbox
+## DOSBOX
 
-## Project setup
-```
-npm install
-```
+在网页玩儿DOS游戏
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+请[点击这里](https://dosbox.gogogoghost.site)去主页
 
-### Compiles and minifies for production
-```
-npm run build
-```
+## 简介
 
-### Run your tests
-```
-npm run test
-```
+基于[js-dos](https://js-dos.com/)搭建的网页dos游戏播放器，有便捷的游戏体验与存档管理，虽然界面很丑。
 
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+功能基本齐全，界面尚在开发，内置游戏库与游戏存档信息，目前仅有仙剑，后续会添加更多游戏。

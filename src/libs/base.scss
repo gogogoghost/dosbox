@@ -17,6 +17,15 @@ html,body{
   display: flex;
   flex-direction: column;
 }
+.flex-center{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.flex-ver-center{
+  display: flex;
+  align-items: center;
+}
 .flex1{
   flex:1;
 }
@@ -28,4 +37,12 @@ html,body{
 }
 .text-center{
   text-align: center;
+}
+
+
+.el-scrollbar__view{
+  height:100%;
+}
+.el-scrollbar .el-scrollbar__wrap {
+  overflow-x: hidden;
 }

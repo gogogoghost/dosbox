@@ -78,19 +78,30 @@ export default function(dom,game){
           },
           //save files
           saveFileToDB(){
+            let count=0;
             this.eachFile((file)=>{
-              if(game.saveFile.test(file)){
+              if(game.saveFile.test(file.toLowerCase())){
                 let buf=this.api.FS.readFile(file).buffer;
                 this.db.add(file,buf);
+                count++;
               }
             })
-            this.db.save();
+            return new Promise((resolve,reject)=>{
+              this.db.save.then(res=>{
+                resolve(count);
+              }).catch(err=>{
+                reject(err);
+              })
+            })
           },
           //restore files
           readFileFromDB(){
+            let count=0;
             this.db.eachFile((name,buf)=>{
               this.writeFile(name,new Uint8Array(buf));
+              count++;
             })
+            return count;
           },
           //export save file
           exportSaveFile(){
@@ -117,7 +128,7 @@ export default function(dom,game){
             input.style.display='none';
             input.addEventListener('change',()=>{
               if(input.files[0].type!='application/json'){
-                cb(0);
+                cb(-1);
               }else{
                 let reader=new FileReader();
                 reader.onload=()=>{
@@ -126,20 +137,21 @@ export default function(dom,game){
                   try{
                     obj=JSON.parse(reader.result)
                   }catch (e) {
-                    cb(0);
+                    cb(-1);
                     return;
                   }
                   if(obj.name!=game.name){
-                    cb(1);
+                    cb(-2);
                     return;
                   }
                   //restore file
                   obj.db=obj.db||{}
-                  for(let key of obj.db){
+                  for(let key in obj.db){
                     this.db.add(key,new Uint8Array(obj.db[key]).buffer);
                   }
                   this.db.save();
-                  this.readFileFromDB();
+                  let count=this.readFileFromDB();
+                  cb(count);
                 }
                 reader.readAsText(input.files[0]);
               }
@@ -153,7 +165,11 @@ export default function(dom,game){
           dos.exec(['rescan']).then(()=>{
             dos.db=new DB(game.name);
             dos.db.read().then(()=>{
-              resolve(dos);
+              dos.exec([game.command]).then(()=>{
+                resolve(dos);
+              }).catch(err=>{
+                reject(err);
+              })
             }).catch(err=>{
               reject('database read error:'+err.toString())
             })

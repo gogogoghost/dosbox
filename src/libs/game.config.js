@@ -5,56 +5,7 @@ export default {
     name:'pal',
     title:'仙剑奇侠传一',
     file:'pal.zip',
-    command:'PAL!.EXE',
-    poster:'pal.webp',
-    saveFile:/.rpg$/
-  },{
-    name:'pal',
-    title:'仙剑奇侠传一',
-    file:'pal.zip',
-    command:'PAL!.EXE',
-    poster:'pal.webp',
-    saveFile:/.rpg$/
-  },{
-    name:'pal',
-    title:'仙剑奇侠传一',
-    file:'pal.zip',
-    command:'PAL!.EXE',
-    poster:'pal.webp',
-    saveFile:/.rpg$/
-  },{
-    name:'pal',
-    title:'仙剑奇侠传一',
-    file:'pal.zip',
-    command:'PAL!.EXE',
-    poster:'pal.webp',
-    saveFile:/.rpg$/
-  },{
-    name:'pal',
-    title:'仙剑奇侠传一',
-    file:'pal.zip',
-    command:'PAL!.EXE',
-    poster:'pal.webp',
-    saveFile:/.rpg$/
-  },{
-    name:'pal',
-    title:'仙剑奇侠传一',
-    file:'pal.zip',
-    command:'PAL!.EXE',
-    poster:'pal.webp',
-    saveFile:/.rpg$/
-  },{
-    name:'pal',
-    title:'仙剑奇侠传一',
-    file:'pal.zip',
-    command:'PAL!.EXE',
-    poster:'pal.webp',
-    saveFile:/.rpg$/
-  },{
-    name:'pal',
-    title:'仙剑奇侠传一',
-    file:'pal.zip',
-    command:'PAL!.EXE',
+    command:'PAL!',
     poster:'pal.webp',
     saveFile:/.rpg$/
   }]

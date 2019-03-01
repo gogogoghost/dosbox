@@ -17,9 +17,6 @@
               <el-col :xs="24" :md="16" :xl="16">
                 <div ref="wrapper" class="relative">
                   <canvas ref="main"></canvas>
-                  <div class="virtual-pad-switch">
-
-                  </div>
                   <div class="virtual-pad">
                     <div class="direction">
                       <div>
@@ -35,6 +32,9 @@
                       B
                     </div>
                   </div>
+                  <div class="flex-center full-note hidden" ref="fullNote">
+                    横屏体验更佳哦
+                  </div>
                 </div>
               </el-col>
               <el-col :xs="24" :md="8" :xl="8">
@@ -43,22 +43,22 @@
                 </div>
                 <el-row :gutter="10">
                   <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="fullGame" type="info">全屏游戏</el-button>
+                    <el-button @click="fullGame" type="info" size="small">全屏游戏</el-button>
                   </el-col>
                   <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="reloadGame" :disabled="!dos" type="info">重新加载</el-button>
+                    <el-button @click="reloadGame" :disabled="!dos" type="info" size="small">重新加载</el-button>
                   </el-col>
                   <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="saveDB" :disabled="!dos" type="info">保存存档</el-button>
+                    <el-button @click="saveDB" :disabled="!dos" type="info" size="small">保存存档</el-button>
                   </el-col>
                   <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="loadDB" :disabled="!dos" type="info">加载存档</el-button>
+                    <el-button @click="loadDB" :disabled="!dos" type="info" size="small">加载存档</el-button>
                   </el-col>
                   <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="exportDB" :disabled="!dos" type="info">导出存档</el-button>
+                    <el-button @click="exportDB" :disabled="!dos" type="info" size="small">导出存档</el-button>
                   </el-col>
                   <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="importDB" :disabled="!dos" type="info">导入存档</el-button>
+                    <el-button @click="importDB" :disabled="!dos" type="info" size="small">导入存档</el-button>
                   </el-col>
                 </el-row>
               </el-col>
@@ -75,7 +75,7 @@
               <el-row :gutter="10">
                 <el-col v-for="item,index in gameList" :key="index" :xs="8" :sm="8" :md="6" :xl="6">
                   <div class="game-item" @click="runGame(item)">
-                    <img :src="baseUrl+item.poster">
+                    <img :src="baseUrl+item.poster" v-if="item.poster">
                     <div>{{item.title}}</div>
                   </div>
                 </el-col>
@@ -332,6 +332,16 @@
         this.$refs.direction.addEventListener('touchmove', directionMove)
         this.$refs.direction.addEventListener('mouseup', directionUp)
         this.$refs.direction.addEventListener('touchend', directionUp)
+        //判断全屏 显示全屏提示
+        window.addEventListener('resize',()=>{
+          if(document.fullscreenElement){
+            if(document.body.offsetHeight>document.body.offsetWidth){
+              this.$refs.fullNote.classList.remove('hidden')
+              return;
+            }
+          }
+          this.$refs.fullNote.classList.add('hidden');
+        })
       })
     }
   }
@@ -400,10 +410,19 @@
       display: none;
     }
   }
-
+  .full-note{
+    position: absolute;
+    width:100%;
+    height:100%;
+    top:0;
+    left:0;
+    color:white;
+    font-size:18px;
+    font-weight: bold;
+    background-color: rgba(0,0,0,.5);
+  }
   .main-box {
     padding: 10px 0;
-
     .virtual-pad {
       position: absolute;
       width: 100%;
@@ -413,14 +432,14 @@
 
       .direction {
         position: absolute;
-        bottom: .3rem;
-        left: .3rem;
+        bottom: .2rem;
+        left: .2rem;
         width: 1.6rem;
         height: 1.6rem;
         border: #8A8A8A solid 2px;
         border-radius: 50%;
-        opacity: .6;
-
+        opacity: .5;
+        background-color: #9D9D9D66;
         span {
           position: absolute;
           left: .6rem;
@@ -463,16 +482,17 @@
 
       .key-a {
         position: absolute;
-        right: 1.5rem;
-        bottom: .8rem;
+        right: 1.3rem;
+        bottom: .5rem;
         color: #8A8A8A;
         border-radius: 50%;
         border: #8A8A8A solid 2px;
         width: .75rem;
         height: .75rem;
-        opacity: .6;
+        opacity: .5;
         font-weight: bold;
         font-size: .24rem;
+        background-color: #9D9D9D66;
       }
 
       .key-b {
@@ -480,13 +500,14 @@
         font-weight: bold;
         position: absolute;
         right: .5rem;
-        bottom: 1.2rem;
+        bottom: 1rem;
         color: #8A8A8A;
         border-radius: 50%;
         border: #8A8A8A solid 2px;
         width: .75rem;
         height: .75rem;
-        opacity: .6;
+        opacity: .5;
+        background-color: #9D9D9D66;
       }
 
       .key-touch {
@@ -497,6 +518,7 @@
 
     canvas {
       width: 100%;
+      height:100%;
       background-color: black;
       display: block;
     }

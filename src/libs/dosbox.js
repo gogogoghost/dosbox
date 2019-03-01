@@ -1,10 +1,12 @@
 import DB from './db'
 import gameConfig from './game.config'
 
-export default function(dom,game){
+export default function(dom,game,onprogress){
   return new Promise((resolve,reject)=>{
     Dos(dom, {
-      onprogress() {},
+      onprogress(stage,total,loaded) {
+        onprogress(stage.startsWith('Resolving')?1:2,total,loaded);
+      },
       onerror() {},
       log(){},
       wdosboxUrl:'/static/libs/js-dos/wdosbox.js'

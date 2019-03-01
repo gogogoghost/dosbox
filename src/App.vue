@@ -72,7 +72,7 @@
                 <i slot="prefix" class="el-input__icon el-icon-search"></i>
               </el-input>
 
-              <el-row :gutter="20">
+              <el-row :gutter="10">
                 <el-col v-for="item,index in gameList" :key="index" :xs="8" :sm="8" :md="6" :xl="6">
                   <div class="game-item" @click="runGame(item)">
                     <img :src="baseUrl+item.poster">
@@ -88,7 +88,16 @@
       </el-scrollbar>
     </el-row>
 
-
+    <el-dialog
+      :visible.sync="loadingShown"
+      :show-close="false"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false">
+      <el-progress :text-inside="true" :stroke-width="18" :percentage="loadPercent"></el-progress>
+      <div class="text-center loading-text">
+        {{loadStage==1?'加载DOSBOX环境':loadStage==2?'加载游戏包':'请稍候'}}
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -107,23 +116,27 @@
         //当前游戏信息
         dos: null,
         runningGame: null,
+        //弹窗信息
+        loadingShown:false,
+        loadStage:0,
+        loadPercent:0,
       }
     },
     methods: {
       //按键模拟
       downKey(keyCode) {
-        let down = new KeyboardEvent('keydown',{
-          keyCode:keyCode,
-          bubbles : true,
-          cancelable : true,
+        let down = new KeyboardEvent('keydown', {
+          keyCode: keyCode,
+          bubbles: true,
+          cancelable: true,
         });
         this.$refs.main.dispatchEvent(down);
       },
       upKey(keyCode) {
-        let up = new KeyboardEvent('keyup',{
-          keyCode:keyCode,
-          bubbles : true,
-          cancelable : true,
+        let up = new KeyboardEvent('keyup', {
+          keyCode: keyCode,
+          bubbles: true,
+          cancelable: true,
         });
         this.$refs.main.dispatchEvent(up);
       },
@@ -137,16 +150,32 @@
       },
       //启动游戏
       runGame(game) {
-        let load = this.$utils.showLoading();
-        dosbox(this.$refs.main, game)
+        //let load = this.$utils.showLoading();
+        this.loadStage=0;
+        this.loadPercent=0;
+        this.loadingShown=true;
+        dosbox(
+          this.$refs.main,
+          game,
+          (stage, total, loaded) => {
+            this.loadStage=stage;
+            let percent=loaded/total*100
+            if(stage==1)
+              percent=percent/2;
+            else if(stage==2)
+              percent=percent/2+50;
+            this.loadPercent=parseInt(percent)
+          })
           .then((dos) => {
-            load.close();
+            //load.close();
             this.dos = dos;
-            window.dos=dos;
+            window.dos = dos;
             this.runningGame = game;
+            this.loadingShown=false;
           })
           .catch(err => {
-            load.close();
+            //load.close();
+            this.loadingShown=false;
             this.$utils.log(err);
             this.$message.error('加载失败');
           });
@@ -197,112 +226,112 @@
       }
     },
     mounted() {
-      this.$nextTick(()=>{
+      this.$nextTick(() => {
         //给按钮赋予事件 A B
-        let keyDown=(keyCode)=>{
-          let self=this;
-          return function(evt){
+        let keyDown = (keyCode) => {
+          let self = this;
+          return function (evt) {
             evt.target.classList.add('key-touch');
             self.downKey(keyCode)
             evt.preventDefault();
           }
         }
-        let keyUp=(keyCode)=>{
-          let self=this;
-          return function(evt){
+        let keyUp = (keyCode) => {
+          let self = this;
+          return function (evt) {
             evt.target.classList.remove('key-touch')
             self.upKey(keyCode)
             evt.preventDefault();
           }
         }
-        this.$refs.keyA.addEventListener('mousedown',keyDown(13));
-        this.$refs.keyA.addEventListener('touchstart',keyDown(13));
-        this.$refs.keyB.addEventListener('mousedown',keyDown(27));
-        this.$refs.keyB.addEventListener('touchstart',keyDown(27));
+        this.$refs.keyA.addEventListener('mousedown', keyDown(13));
+        this.$refs.keyA.addEventListener('touchstart', keyDown(13));
+        this.$refs.keyB.addEventListener('mousedown', keyDown(27));
+        this.$refs.keyB.addEventListener('touchstart', keyDown(27));
 
 
-        this.$refs.keyA.addEventListener('mouseup',keyUp(13));
-        this.$refs.keyA.addEventListener('touchend',keyUp(13));
-        this.$refs.keyB.addEventListener('mouseup',keyUp(27));
-        this.$refs.keyB.addEventListener('touchend',keyUp(27));
+        this.$refs.keyA.addEventListener('mouseup', keyUp(13));
+        this.$refs.keyA.addEventListener('touchend', keyUp(13));
+        this.$refs.keyB.addEventListener('mouseup', keyUp(27));
+        this.$refs.keyB.addEventListener('touchend', keyUp(27));
         //摇杆
-        let direction=0;
-        let directionBtn=this.$refs.directionBtn
-        let getDirection=(x,y)=>{
-          if(x<0&&x<y&&y<=-x){
+        let direction = 0;
+        let directionBtn = this.$refs.directionBtn
+        let getDirection = (x, y) => {
+          if (x < 0 && x < y && y <= -x) {
             //left
             return 37;
-          }else if(y>0&&-y<x&&x<=y){
+          } else if (y > 0 && -y < x && x <= y) {
             //top
             return 38;
-          }else if(x>0&&-x<=y&&y<x){
+          } else if (x > 0 && -x <= y && y < x) {
             //right
             return 39;
-          }else if(y<0&&y<=x&&x<-y){
+          } else if (y < 0 && y <= x && x < -y) {
             //bottom
             return 40;
-          }else{
+          } else {
             //default left
             return 0;
           }
         }
         //移动摇杆圆点
-        let moveDirectionBtn=(x,y)=>{
-          directionBtn.style.left=x-directionBtn.offsetWidth/2+'px'
-          directionBtn.style.top=y-directionBtn.offsetHeight/2+'px'
+        let moveDirectionBtn = (x, y) => {
+          directionBtn.style.left = x - directionBtn.offsetWidth / 2 + 'px'
+          directionBtn.style.top = y - directionBtn.offsetHeight / 2 + 'px'
         }
         //摇杆归位
-        let resetDirectionBtn=()=>{
-          directionBtn.style.left='';
-          directionBtn.style.top='';
+        let resetDirectionBtn = () => {
+          directionBtn.style.left = '';
+          directionBtn.style.top = '';
         }
         //摇杆移动
-        let directActive=(evt)=>{
-          if(evt.constructor==TouchEvent){
-            evt.clientX=evt.targetTouches[0].clientX;
-            evt.clientY=evt.targetTouches[0].clientY;
+        let directActive = (evt) => {
+          if (evt.constructor == TouchEvent) {
+            evt.clientX = evt.targetTouches[0].clientX;
+            evt.clientY = evt.targetTouches[0].clientY;
           }
-          let dom=evt.target;
-          let rect=dom.getBoundingClientRect();
-          let x=-(dom.offsetWidth/2+rect.left-evt.clientX)
-          let y=dom.offsetHeight/2+rect.top-evt.clientY
-          changeDirection(getDirection(x,y));
+          let dom = evt.target;
+          let rect = dom.getBoundingClientRect();
+          let x = -(dom.offsetWidth / 2 + rect.left - evt.clientX)
+          let y = dom.offsetHeight / 2 + rect.top - evt.clientY
+          changeDirection(getDirection(x, y));
 
-          moveDirectionBtn(evt.clientX-rect.left,evt.clientY-rect.top);
+          moveDirectionBtn(evt.clientX - rect.left, evt.clientY - rect.top);
         }
-        let changeDirection=(mDirection)=>{
-          if(mDirection!=direction){
-            if(direction!=0){
+        let changeDirection = (mDirection) => {
+          if (mDirection != direction) {
+            if (direction != 0) {
               this.upKey(direction);
             }
-            if(mDirection!=0){
+            if (mDirection != 0) {
               this.downKey(mDirection)
             }
-            direction=mDirection
+            direction = mDirection
           }
         }
         //事件
-        let directionDown=function(evt){
+        let directionDown = function (evt) {
           directActive(evt);
           evt.preventDefault();
         }
-        let directionMove=function(evt){
-          if(!direction)
+        let directionMove = function (evt) {
+          if (!direction)
             return;
           directActive(evt);
           evt.preventDefault();
         }
-        let directionUp=function(evt){
+        let directionUp = function (evt) {
           changeDirection(0);
           resetDirectionBtn();
           evt.preventDefault();
         }
-        this.$refs.direction.addEventListener('mousedown',directionDown)
-        this.$refs.direction.addEventListener('touchstart',directionDown)
-        this.$refs.direction.addEventListener('mousemove',directionMove)
-        this.$refs.direction.addEventListener('touchmove',directionMove)
-        this.$refs.direction.addEventListener('mouseup',directionUp)
-        this.$refs.direction.addEventListener('touchend',directionUp)
+        this.$refs.direction.addEventListener('mousedown', directionDown)
+        this.$refs.direction.addEventListener('touchstart', directionDown)
+        this.$refs.direction.addEventListener('mousemove', directionMove)
+        this.$refs.direction.addEventListener('touchmove', directionMove)
+        this.$refs.direction.addEventListener('mouseup', directionUp)
+        this.$refs.direction.addEventListener('touchend', directionUp)
       })
     }
   }
@@ -322,10 +351,11 @@
   }
 </style>
 <style lang="scss" scoped>
+  .loading-text{
+    margin-top:15px;
+    font-size:17px;
+  }
   .game-list {
-    border-top: #8A8A8A solid 1px;
-    padding: 20px 0;
-
     & > div:first-child {
       margin-bottom: 20px;
     }
@@ -349,12 +379,12 @@
   }
 
   .header {
-    height: 48px;
+    height: 56px;
     border-bottom: #8A8A8A solid 1px;
 
     img {
-      width: 32px;
-      margin-left: 20px;
+      width: 42px;
+      margin-left: 10px;
       margin-right: 20px;
     }
 
@@ -366,27 +396,31 @@
   }
 
   @media only screen and (min-width: 992px) {
-    .virtual-pad{
+    .virtual-pad {
       display: none;
     }
   }
+
   .main-box {
     padding: 10px 0;
+
     .virtual-pad {
       position: absolute;
       width: 100%;
       height: 100%;
       z-index: 999;
       top: 0;
+
       .direction {
         position: absolute;
-        bottom: .5rem;
+        bottom: .3rem;
         left: .3rem;
         width: 1.6rem;
         height: 1.6rem;
-        border: #8A8A8A solid 1px;
+        border: #8A8A8A solid 2px;
         border-radius: 50%;
         opacity: .6;
+
         span {
           position: absolute;
           left: .6rem;
@@ -396,38 +430,68 @@
           background-color: #8A8A8A;
           border-radius: 50%;
         }
-        &>div:last-child{
-          width:100%;
-          height:100%;
+
+        & > div:last-child {
+          width: 100%;
+          height: 100%;
           position: relative;
           border-radius: 50%;
         }
+
+        &:before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          height: 0;
+          width: 100%;
+          left: 0;
+          border-top: #8A8A8A solid 2px;
+          transform: rotateZ(45deg);
+        }
+
+        &:after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          height: 0;
+          width: 100%;
+          left: 0;
+          border-top: #8A8A8A solid 2px;
+          transform: rotateZ(-45deg);
+        }
       }
-      .key-a{
+
+      .key-a {
         position: absolute;
-        right:1.5rem;
-        bottom:.8rem;
-        color:#8A8A8A;
+        right: 1.5rem;
+        bottom: .8rem;
+        color: #8A8A8A;
         border-radius: 50%;
-        border:#8A8A8A solid 1px;
-        width:.75rem;
-        height:.75rem;
+        border: #8A8A8A solid 2px;
+        width: .75rem;
+        height: .75rem;
+        opacity: .6;
+        font-weight: bold;
+        font-size: .24rem;
+      }
+
+      .key-b {
+        font-size: .24rem;
+        font-weight: bold;
+        position: absolute;
+        right: .5rem;
+        bottom: 1.2rem;
+        color: #8A8A8A;
+        border-radius: 50%;
+        border: #8A8A8A solid 2px;
+        width: .75rem;
+        height: .75rem;
         opacity: .6;
       }
-      .key-b{
-        position: absolute;
-        right:.5rem;
-        bottom:1.2rem;
-        color:#8A8A8A;
-        border-radius: 50%;
-        border:#8A8A8A solid 1px;
-        width:.75rem;
-        height:.75rem;
-        opacity: .6;
-      }
-      .key-touch{
+
+      .key-touch {
         background-color: #8A8A8A;
-        color:black;
+        color: #DCDCDC;
       }
     }
 

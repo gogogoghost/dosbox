@@ -87,7 +87,7 @@ export default function(dom,game){
               }
             })
             return new Promise((resolve,reject)=>{
-              this.db.save.then(res=>{
+              this.db.save().then(res=>{
                 resolve(count);
               }).catch(err=>{
                 reject(err);
@@ -161,10 +161,11 @@ export default function(dom,game){
             document.body.removeChild(input);
           }
         })
-        fs.extract(`${gameConfig.baseUrl}${game.name}/${game.file}`).then(() => {
+        fs.extract(`${gameConfig.gameBaseUrl}${game.file}`).then(() => {
           dos.exec(['rescan']).then(()=>{
             dos.db=new DB(game.name);
             dos.db.read().then(()=>{
+              //resolve(dos);
               dos.exec([game.command]).then(()=>{
                 resolve(dos);
               }).catch(err=>{

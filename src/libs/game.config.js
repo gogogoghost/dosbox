@@ -1,5 +1,6 @@
 export default {
-  baseUrl:'/static/games/',
+  gameBaseUrl:'/static/games/',
+  posterBaseUrl:'/static/posters/',
   list:[{
     name:'pal',
     title:'仙剑奇侠传一',

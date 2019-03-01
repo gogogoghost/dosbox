@@ -1,72 +1,92 @@
 <template>
   <div class="wrapper">
 
-      <el-row class="full-height">
-        <el-scrollbar class="full-height">
+    <el-row class="full-height">
+      <el-scrollbar class="full-height">
         <el-col :xs="24" :md="18" :xl="16" class="container">
 
-            <div>
-              <div class="header flex-ver-center">
-                <img src="@/assets/dosbox.webp">
-                <div>
-                  DOSBOX GAME
-                </div>
-              </div>
-
-              <el-row :gutter="20" class="main-box">
-                <el-col :xs="24" :md="16" :xl="16">
-                  <canvas ref="main"></canvas>
-                </el-col>
-                <el-col :xs="24" :md="8" :xl="8">
-                  <div class="title">
-                    {{runningGame?runningGame.title:'等待选择游戏'}}
-                  </div>
-                  <el-row :gutter="10">
-                    <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                      <el-button @click="fullGame" :disabled="!dos" type="info">全屏游戏</el-button>
-                    </el-col>
-                    <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                      <el-button @click="reloadGame" :disabled="!dos" type="info">重新加载</el-button>
-                    </el-col>
-                    <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                      <el-button @click="saveDB" :disabled="!dos" type="info">保存存档</el-button>
-                    </el-col>
-                    <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                      <el-button @click="loadDB" :disabled="!dos" type="info">加载存档</el-button>
-                    </el-col>
-                    <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                      <el-button @click="exportDB" :disabled="!dos" type="info">导出存档</el-button>
-                    </el-col>
-                    <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                      <el-button @click="importDB" :disabled="!dos" type="info">导入存档</el-button>
-                    </el-col>
-                  </el-row>
-                </el-col>
-              </el-row>
-
-              <div class="game-list">
-
-                <el-input
-                  placeholder="搜索内容"
-                  v-model="search">
-                  <i slot="prefix" class="el-input__icon el-icon-search"></i>
-                </el-input>
-
-                <el-row :gutter="20">
-                  <el-col v-for="item,index in gameList" :key="index" :xs="8" :sm="8" :md="6" :xl="6">
-                    <div class="game-item" @click="runGame(item)">
-                      <img :src="baseUrl+item.name+'/'+item.poster">
-                      <div>{{item.title}}</div>
-                    </div>
-                  </el-col>
-                </el-row>
+          <div>
+            <div class="header flex-ver-center">
+              <img src="@/assets/dosbox.webp">
+              <div>
+                DOSBOX GAME
               </div>
             </div>
 
+            <el-row :gutter="20" class="main-box">
+              <el-col :xs="24" :md="16" :xl="16">
+                <div ref="wrapper" class="relative">
+                  <canvas ref="main"></canvas>
+                  <div class="virtual-pad-switch">
+
+                  </div>
+                  <div class="virtual-pad">
+                    <div class="direction">
+                      <div>
+                        <span ref="directionBtn"></span>
+                      </div>
+                      <div ref="direction">
+                      </div>
+                    </div>
+                    <div class="key-a flex-center" ref="keyA">
+                      A
+                    </div>
+                    <div class="key-b flex-center" ref="keyB">
+                      B
+                    </div>
+                  </div>
+                </div>
+              </el-col>
+              <el-col :xs="24" :md="8" :xl="8">
+                <div class="title">
+                  {{runningGame?runningGame.title:'等待选择游戏'}}
+                </div>
+                <el-row :gutter="10">
+                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
+                    <el-button @click="fullGame" type="info">全屏游戏</el-button>
+                  </el-col>
+                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
+                    <el-button @click="reloadGame" :disabled="!dos" type="info">重新加载</el-button>
+                  </el-col>
+                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
+                    <el-button @click="saveDB" :disabled="!dos" type="info">保存存档</el-button>
+                  </el-col>
+                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
+                    <el-button @click="loadDB" :disabled="!dos" type="info">加载存档</el-button>
+                  </el-col>
+                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
+                    <el-button @click="exportDB" :disabled="!dos" type="info">导出存档</el-button>
+                  </el-col>
+                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
+                    <el-button @click="importDB" :disabled="!dos" type="info">导入存档</el-button>
+                  </el-col>
+                </el-row>
+              </el-col>
+            </el-row>
+
+            <div class="game-list">
+
+              <el-input
+                placeholder="搜索内容"
+                v-model="search">
+                <i slot="prefix" class="el-input__icon el-icon-search"></i>
+              </el-input>
+
+              <el-row :gutter="20">
+                <el-col v-for="item,index in gameList" :key="index" :xs="8" :sm="8" :md="6" :xl="6">
+                  <div class="game-item" @click="runGame(item)">
+                    <img :src="baseUrl+item.poster">
+                    <div>{{item.title}}</div>
+                  </div>
+                </el-col>
+              </el-row>
+            </div>
+          </div>
+
 
         </el-col>
-        </el-scrollbar>
-      </el-row>
+      </el-scrollbar>
+    </el-row>
 
 
   </div>
@@ -75,161 +95,372 @@
 <script>
   import dosbox from './libs/dosbox'
   import gameConfig from './libs/game.config'
+
   export default {
     name: 'app',
     data() {
       return {
-        baseUrl:gameConfig.baseUrl,
-        gameList:gameConfig.list,
-        search:'',
-        shownList:[],
+        baseUrl: gameConfig.posterBaseUrl,
+        gameList: gameConfig.list,
+        search: '',
+        shownList: [],
         //当前游戏信息
-        dos:null,
-        runningGame:null,
+        dos: null,
+        runningGame: null,
       }
     },
-    methods:{
+    methods: {
+      //按键模拟
+      downKey(keyCode) {
+        let down = new KeyboardEvent('keydown',{
+          keyCode:keyCode,
+          bubbles : true,
+          cancelable : true,
+        });
+        this.$refs.main.dispatchEvent(down);
+      },
+      upKey(keyCode) {
+        let up = new KeyboardEvent('keyup',{
+          keyCode:keyCode,
+          bubbles : true,
+          cancelable : true,
+        });
+        this.$refs.main.dispatchEvent(up);
+      },
       //全屏
-      fullGame(){
-        this.$refs.main.requestFullscreen();
+      fullGame() {
+        let el = this.$refs.wrapper;
+        let request = el.requestFullScreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+        if (typeof request != "undefined" && request) {
+          request.call(el);
+        }
       },
       //启动游戏
-      runGame(game){
-        let load=this.$utils.showLoading();
-        dosbox(this.$refs.main,game)
-          .then((dos)=>{
+      runGame(game) {
+        let load = this.$utils.showLoading();
+        dosbox(this.$refs.main, game)
+          .then((dos) => {
             load.close();
-            this.dos=dos;
-            this.runningGame=game;
+            this.dos = dos;
+            window.dos=dos;
+            this.runningGame = game;
           })
-          .catch(err=>{
+          .catch(err => {
             load.close();
             this.$utils.log(err);
             this.$message.error('加载失败');
           });
       },
       //重启游戏
-      reloadGame(){
-        if(this.dos){
+      reloadGame() {
+        if (this.dos) {
           this.dos.exit();
           this.runGame(this.runningGame);
         }
       },
-      saveDB(){
-        let load=this.$utils.showLoading('保存中');
-        if(this.dos){
-          this.dos.saveFileToDB().then((count)=>{
+      saveDB() {
+        let load = this.$utils.showLoading('保存中');
+        if (this.dos) {
+          this.dos.saveFileToDB().then((count) => {
             load.close();
             this.$message.success(`成功保存${count}个文件`)
-          }).catch(err=>{
+          }).catch(err => {
             this.$utils.log(err)
             load.close();
             this.$message.error('保存时遇到问题');
           })
         }
       },
-      loadDB(){
-        if(this.dos){
-          let count=this.dos.readFileFromDB();
+      loadDB() {
+        if (this.dos) {
+          let count = this.dos.readFileFromDB();
           this.$message.success(`已加载${count}个文件`);
         }
       },
-      exportDB(){
-        if(this.dos){
+      exportDB() {
+        if (this.dos) {
           this.dos.exportSaveFile();
         }
       },
-      importDB(){
-        if(this.dos){
-          this.dos.importSaveFile((count)=>{
-            if(count>=0){
+      importDB() {
+        if (this.dos) {
+          this.dos.importSaveFile((count) => {
+            if (count >= 0) {
               this.$message.success(`成功导入${count}个文件`);
-            }else if(count==-1){
+            } else if (count == -1) {
               this.$message.error('文件格式有误');
-            }else if(count==-2){
+            } else if (count == -2) {
               this.$message.error('非该游戏存档');
             }
           })
         }
       }
+    },
+    mounted() {
+      this.$nextTick(()=>{
+        //给按钮赋予事件 A B
+        let keyDown=(keyCode)=>{
+          let self=this;
+          return function(evt){
+            evt.target.classList.add('key-touch');
+            self.downKey(keyCode)
+            evt.preventDefault();
+          }
+        }
+        let keyUp=(keyCode)=>{
+          let self=this;
+          return function(evt){
+            evt.target.classList.remove('key-touch')
+            self.upKey(keyCode)
+            evt.preventDefault();
+          }
+        }
+        this.$refs.keyA.addEventListener('mousedown',keyDown(13));
+        this.$refs.keyA.addEventListener('touchstart',keyDown(13));
+        this.$refs.keyB.addEventListener('mousedown',keyDown(27));
+        this.$refs.keyB.addEventListener('touchstart',keyDown(27));
+
+
+        this.$refs.keyA.addEventListener('mouseup',keyUp(13));
+        this.$refs.keyA.addEventListener('touchend',keyUp(13));
+        this.$refs.keyB.addEventListener('mouseup',keyUp(27));
+        this.$refs.keyB.addEventListener('touchend',keyUp(27));
+        //摇杆
+        let direction=0;
+        let directionBtn=this.$refs.directionBtn
+        let getDirection=(x,y)=>{
+          if(x<0&&x<y&&y<=-x){
+            //left
+            return 37;
+          }else if(y>0&&-y<x&&x<=y){
+            //top
+            return 38;
+          }else if(x>0&&-x<=y&&y<x){
+            //right
+            return 39;
+          }else if(y<0&&y<=x&&x<-y){
+            //bottom
+            return 40;
+          }else{
+            //default left
+            return 0;
+          }
+        }
+        //移动摇杆圆点
+        let moveDirectionBtn=(x,y)=>{
+          directionBtn.style.left=x-directionBtn.offsetWidth/2+'px'
+          directionBtn.style.top=y-directionBtn.offsetHeight/2+'px'
+        }
+        //摇杆归位
+        let resetDirectionBtn=()=>{
+          directionBtn.style.left='';
+          directionBtn.style.top='';
+        }
+        //摇杆移动
+        let directActive=(evt)=>{
+          if(evt.constructor==TouchEvent){
+            evt.clientX=evt.targetTouches[0].clientX;
+            evt.clientY=evt.targetTouches[0].clientY;
+          }
+          let dom=evt.target;
+          let rect=dom.getBoundingClientRect();
+          let x=-(dom.offsetWidth/2+rect.left-evt.clientX)
+          let y=dom.offsetHeight/2+rect.top-evt.clientY
+          changeDirection(getDirection(x,y));
+
+          moveDirectionBtn(evt.clientX-rect.left,evt.clientY-rect.top);
+        }
+        let changeDirection=(mDirection)=>{
+          if(mDirection!=direction){
+            if(direction!=0){
+              this.upKey(direction);
+            }
+            if(mDirection!=0){
+              this.downKey(mDirection)
+            }
+            direction=mDirection
+          }
+        }
+        //事件
+        let directionDown=function(evt){
+          directActive(evt);
+          evt.preventDefault();
+        }
+        let directionMove=function(evt){
+          if(!direction)
+            return;
+          directActive(evt);
+          evt.preventDefault();
+        }
+        let directionUp=function(evt){
+          changeDirection(0);
+          resetDirectionBtn();
+          evt.preventDefault();
+        }
+        this.$refs.direction.addEventListener('mousedown',directionDown)
+        this.$refs.direction.addEventListener('touchstart',directionDown)
+        this.$refs.direction.addEventListener('mousemove',directionMove)
+        this.$refs.direction.addEventListener('touchmove',directionMove)
+        this.$refs.direction.addEventListener('mouseup',directionUp)
+        this.$refs.direction.addEventListener('touchend',directionUp)
+      })
     }
   }
 </script>
 <style lang="scss">
-  .main-box{
-    .el-button{
-      margin-left:0 !important;
-      margin-right:10px !important;
-      margin-bottom:10px;
+  .main-box {
+    .el-button {
+      margin-left: 0 !important;
+      margin-right: 10px !important;
+      margin-bottom: 10px;
     }
   }
+
   .el-input__inner:focus {
-    border-color: #8A8A8A!important;
+    border-color: #8A8A8A !important;
     outline: 0;
   }
 </style>
 <style lang="scss" scoped>
-  .game-list{
-    border-top:#8A8A8A solid 1px;
-    padding:20px 0;
-    &>div:first-child{
-      margin-bottom:20px;
+  .game-list {
+    border-top: #8A8A8A solid 1px;
+    padding: 20px 0;
+
+    & > div:first-child {
+      margin-bottom: 20px;
     }
-    .game-item{
-      padding:5px;
+
+    .game-item {
+      padding: 5px;
       background-color: white;
-      margin-bottom:15px;
+      margin-bottom: 15px;
       border-radius: 5px;
       cursor: pointer;
-      img{
-        width:100%;
+
+      img {
+        width: 100%;
       }
-      div{
+
+      div {
         text-align: center;
-        font-size:14px;
+        font-size: 14px;
       }
     }
   }
-  .header{
-    height:70px;
-    border-bottom:#8A8A8A solid 1px;
-    img{
-      width:48px;
-      margin-left:20px;
-      margin-right:20px;
+
+  .header {
+    height: 48px;
+    border-bottom: #8A8A8A solid 1px;
+
+    img {
+      width: 32px;
+      margin-left: 20px;
+      margin-right: 20px;
     }
-    div{
-      font-size:28px;
+
+    div {
+      font-size: 28px;
       font-weight: bold;
-      color:#8A8A8A;
+      color: #8A8A8A;
     }
   }
-  .main-box{
-    padding:20px 0;
-    canvas{
-      width:100%;
+
+  @media only screen and (min-width: 992px) {
+    .virtual-pad{
+      display: none;
+    }
+  }
+  .main-box {
+    padding: 10px 0;
+    .virtual-pad {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 999;
+      top: 0;
+      .direction {
+        position: absolute;
+        bottom: .5rem;
+        left: .3rem;
+        width: 1.6rem;
+        height: 1.6rem;
+        border: #8A8A8A solid 1px;
+        border-radius: 50%;
+        opacity: .6;
+        span {
+          position: absolute;
+          left: .6rem;
+          top: .6rem;
+          height: .4rem;
+          width: .4rem;
+          background-color: #8A8A8A;
+          border-radius: 50%;
+        }
+        &>div:last-child{
+          width:100%;
+          height:100%;
+          position: relative;
+          border-radius: 50%;
+        }
+      }
+      .key-a{
+        position: absolute;
+        right:1.5rem;
+        bottom:.8rem;
+        color:#8A8A8A;
+        border-radius: 50%;
+        border:#8A8A8A solid 1px;
+        width:.75rem;
+        height:.75rem;
+        opacity: .6;
+      }
+      .key-b{
+        position: absolute;
+        right:.5rem;
+        bottom:1.2rem;
+        color:#8A8A8A;
+        border-radius: 50%;
+        border:#8A8A8A solid 1px;
+        width:.75rem;
+        height:.75rem;
+        opacity: .6;
+      }
+      .key-touch{
+        background-color: #8A8A8A;
+        color:black;
+      }
+    }
+
+    canvas {
+      width: 100%;
       background-color: black;
+      display: block;
     }
-    .title{
+
+    .title {
       text-align: center;
-      font-size:20px;
-      margin-bottom:20px;
-      margin-top:10px;
+      font-size: 20px;
+      margin-bottom: 20px;
+      margin-top: 10px;
     }
-    button{
-      width:100%;
+
+    button {
+      width: 100%;
     }
   }
-  .wrapper{
+
+  .wrapper {
     position: absolute;
-    width:100%;
-    height:100%;
+    width: 100%;
+    height: 100%;
+    font-size: 16px;
   }
-  .container{
-    margin:0 auto;
-    padding:20px;
+
+  .container {
+    margin: 0 auto;
+    padding: 0 10px;
     float: none;
-    min-height:100%;
+    min-height: 100%;
     background-color: #DCDFE6;
   }
 

@@ -1,4 +1,5 @@
 import DB from './db'
+import jszip from 'jszip'
 import gameConfig from './game.config'
 
 export default function(dom,game,onprogress){
@@ -84,21 +85,6 @@ export default function(dom,game,onprogress){
             this.db.save(file,buffer).catch(err=>{
               console.log(err);
             });
-            /*let count=0;
-            this.eachFile((file)=>{
-              if(game.saveFile.test(file.toLowerCase())){
-                let buf=this.api.FS.readFile(file).buffer;
-                this.db.add(file,buf);
-                count++;
-              }
-            })
-            return new Promise((resolve,reject)=>{
-              this.db.save().then(res=>{
-                resolve(count);
-              }).catch(err=>{
-                reject(err);
-              })
-            })*/
           },
           //restore files
           readFileFromDB(){
@@ -111,21 +97,43 @@ export default function(dom,game,onprogress){
           },
           //export save file
           exportSaveFile(){
-            let obj={
+            /*let obj={
               name:game.name,
               db:{}
             };
             this.db.eachFile((name,buf)=>{
               obj.db[name]=Array.prototype.slice.call(new Uint8Array(buf));
+            })*/
+            let zip=new jszip();
+            this.db.read((name,files)=>{
+              let pathList=name.split('/');
+              let root='';
+              let folder=zip;
+              for(let i=0;i<pathList.length;i++){
+                if(pathList[i]){
+                  root+='/'+pathList[i]
+                  if(i==pathList.length-1){
+                    //the last is file name
+                    console.log(pathList[i]);
+                    folder.file(pathList[i],new Blob([files]),{binary:true})
+                  }else{
+                    console.log('folder',root)
+                    folder=zip.folder(root);
+                  }
+                }
+              }
             })
-            let blob=new Blob([JSON.stringify(obj)]);
-            let a=document.createElement('a');
-            a.href=URL.createObjectURL(blob);
-            a.download=game.name+'.json';
-            a.style.display='none';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            zip.file('test.txt','123456');
+            zip.generateAsync({type:'blob'})
+              .then(blob=>{
+                let a=document.createElement('a');
+                a.href=URL.createObjectURL(blob);
+                a.download=game.name+'.zip';
+                a.style.display='none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+              })
           },
           //import save file from disk
           importSaveFile(cb){
@@ -226,29 +234,18 @@ export default function(dom,game,onprogress){
                   }
                 }
               })
-              /*parent[childName]=new Proxy(parent[childName],{
-                set(target,key,value,proxy){
-                  console.log('set:'+path+key);
-                  return Reflect.set(target,key,value,proxy);
-                }
-              })*/
             }
           }
         })
-        /*dos.dos.FS.root.contents=new Proxy(dos.dos.FS.root.contents,{
-          set(target,key,value,proxy){
-            console.log('listen:::::::::::',key);
-            return Reflect.set(target,key,value,proxy);
-          }
-        })*/
-        window.dosbox=dos;
         fs.extract(`${gameConfig.gameBaseUrl}${game.file}`).then(() => {
           dos.db=new DB(game.name);
           dos.readFileFromDB();
           dos.exec(['rescan']).then(()=>{
-            // dos.listenFS();
-            // resolve(dos);
-            // return;
+            setTimeout(()=>{
+              dos.listenFS();
+            },1000)
+            resolve(dos);
+            return;
             dos.exec([game.command]).then(()=>{
               dos.listenFS();
               resolve(dos);

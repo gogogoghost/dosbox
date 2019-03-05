@@ -10,6 +10,7 @@
   "dependencies": {
     "dexie": "^2.0.4",
     "element-ui": "^2.5.4",
+    "jszip": "^3.2.0",
     "node-sass": "^4.11.0",
     "sass-loader": "^7.1.0",
     "vue": "^2.6.6"

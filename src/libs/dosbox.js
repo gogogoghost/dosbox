@@ -19,8 +19,8 @@ export default function(dom,game,onprogress){
               this.shellInputClients.push(resolve);
               for(let arg of args){
                 this.shellInputQueue.push(arg);
-                this.requestShellInput();
               }
+              this.requestShellInput();
             })
           },
           //isDir
@@ -44,6 +44,7 @@ export default function(dom,game,onprogress){
           eachFile(cb,root){
             root=root||'/';
             for(let item of this.api.FS.readdir(root)){
+
               let isInternal=false;
               for(let file of this.internalFile){
                 if(file==item){
@@ -79,8 +80,11 @@ export default function(dom,game,onprogress){
             }
           },
           //save files
-          saveFileToDB(){
-            let count=0;
+          saveFileToDB(file,buffer){
+            this.db.save(file,buffer).catch(err=>{
+              console.log(err);
+            });
+            /*let count=0;
             this.eachFile((file)=>{
               if(game.saveFile.test(file.toLowerCase())){
                 let buf=this.api.FS.readFile(file).buffer;
@@ -94,12 +98,12 @@ export default function(dom,game,onprogress){
               }).catch(err=>{
                 reject(err);
               })
-            })
+            })*/
           },
           //restore files
           readFileFromDB(){
             let count=0;
-            this.db.eachFile((name,buf)=>{
+            this.db.read((name,buf)=>{
               this.writeFile(name,new Uint8Array(buf));
               count++;
             })
@@ -161,20 +165,95 @@ export default function(dom,game,onprogress){
             document.body.appendChild(input);
             input.click();
             document.body.removeChild(input);
+          },
+          listenFS(parent,childName,path){
+            parent=parent||this.dos.FS;
+            childName=childName||'root';
+            path=path||'/'
+
+            let isInternal=false;
+            for(let file of this.internalFile){
+              if(file==childName){
+                isInternal=true;
+              }
+            }
+            if(isInternal)
+              return;
+
+            let contents=parent[childName].contents;
+            let isFolder=contents?contents.constructor==Object:false;
+            if(isFolder){
+              //is a folder
+              for(let key in contents){
+                this.listenFS(contents,key,path+key+'/');
+              }
+              let self=this;
+              parent[childName].contents=new Proxy(parent[childName].contents,{
+                set(target,key,value,proxy){
+                  //新增文件夹
+                  //console.log('set:'+path+key)
+                  let result=Reflect.set(target,key,value,proxy);
+                  if(contents.constructor==Object){
+                    self.listenFS(contents,key,path+key+'/');
+                  }
+                  return result;
+                },
+                deleteProperty(target, key,proxy) {
+                  let name=path+key
+                  //删除文件
+                  this.db.delete(name).catch(err=>{
+                    console.log(err);
+                  })
+                  return Reflect.deleteProperty(target,key,proxy);
+                }
+              })
+            }else{
+              let contents=parent[childName].contents;
+              path=path.substring(0,path.length-1);
+              let self=this;
+              Object.defineProperty(parent[childName],'contents',{
+                get(){
+                  return contents;
+                },
+                set(val){
+                  contents=val;
+                  if(!val){
+                    self.saveFileToDB(path,null);
+                  }else{
+                    if(val.constructor==Uint8Array){
+                      self.saveFileToDB(path,val.buffer);
+                    }
+                  }
+                }
+              })
+              /*parent[childName]=new Proxy(parent[childName],{
+                set(target,key,value,proxy){
+                  console.log('set:'+path+key);
+                  return Reflect.set(target,key,value,proxy);
+                }
+              })*/
+            }
           }
         })
+        /*dos.dos.FS.root.contents=new Proxy(dos.dos.FS.root.contents,{
+          set(target,key,value,proxy){
+            console.log('listen:::::::::::',key);
+            return Reflect.set(target,key,value,proxy);
+          }
+        })*/
+        window.dosbox=dos;
         fs.extract(`${gameConfig.gameBaseUrl}${game.file}`).then(() => {
+          dos.db=new DB(game.name);
+          dos.readFileFromDB();
           dos.exec(['rescan']).then(()=>{
-            dos.db=new DB(game.name);
-            dos.db.read().then(()=>{
-              //resolve(dos);
-              dos.exec([game.command]).then(()=>{
-                resolve(dos);
-              }).catch(err=>{
-                reject(err);
-              })
+            // dos.listenFS();
+            // resolve(dos);
+            // return;
+            dos.exec([game.command]).then(()=>{
+              dos.listenFS();
+              resolve(dos);
             }).catch(err=>{
-              reject('database read error:'+err.toString())
+              reject(err);
             })
           })
         }).catch((err)=>{

@@ -46,19 +46,19 @@
                     <el-button @click="fullGame" type="info" size="small">全屏游戏</el-button>
                   </el-col>
                   <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="reloadGame" :disabled="!dos" type="info" size="small">重新加载</el-button>
+                    <el-button @click="reloadGame" :disabled="!runningGame" type="info" size="small">重新加载</el-button>
+                  </el-col>
+                  <!--<el-col :xs="8" :sm="6" :md="12" :xl="8">-->
+                    <!--<el-button @click="saveDB" :disabled="!runningGame" type="info" size="small">保存存档</el-button>-->
+                  <!--</el-col>-->
+                  <!--<el-col :xs="8" :sm="6" :md="12" :xl="8">-->
+                    <!--<el-button @click="loadDB" :disabled="!runningGame" type="info" size="small">加载存档</el-button>-->
+                  <!--</el-col>-->
+                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
+                    <el-button @click="exportDB" :disabled="!runningGame" type="info" size="small">导出存档</el-button>
                   </el-col>
                   <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="saveDB" :disabled="!dos" type="info" size="small">保存存档</el-button>
-                  </el-col>
-                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="loadDB" :disabled="!dos" type="info" size="small">加载存档</el-button>
-                  </el-col>
-                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="exportDB" :disabled="!dos" type="info" size="small">导出存档</el-button>
-                  </el-col>
-                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="importDB" :disabled="!dos" type="info" size="small">导入存档</el-button>
+                    <el-button @click="importDB" :disabled="!runningGame" type="info" size="small">导入存档</el-button>
                   </el-col>
                 </el-row>
               </el-col>
@@ -105,6 +105,8 @@
   import dosbox from './libs/dosbox'
   import gameConfig from './libs/game.config'
 
+  
+  let dosInstance=null;
   export default {
     name: 'app',
     data() {
@@ -114,7 +116,6 @@
         search: '',
         shownList: [],
         //当前游戏信息
-        dos: null,
         runningGame: null,
         //弹窗信息
         loadingShown:false,
@@ -168,8 +169,7 @@
           })
           .then((dos) => {
             //load.close();
-            this.dos = dos;
-            window.dos = dos;
+            dosInstance = dos;
             this.runningGame = game;
             this.loadingShown=false;
           })
@@ -182,15 +182,15 @@
       },
       //重启游戏
       reloadGame() {
-        if (this.dos) {
-          this.dos.exit();
+        if (dosInstance) {
+          dosInstance.exit();
           this.runGame(this.runningGame);
         }
       },
-      saveDB() {
+      /*saveDB() {
         let load = this.$utils.showLoading('保存中');
-        if (this.dos) {
-          this.dos.saveFileToDB().then((count) => {
+        if (dosInstance) {
+          dosInstance.saveFileToDB().then((count) => {
             load.close();
             this.$message.success(`成功保存${count}个文件`)
           }).catch(err => {
@@ -201,19 +201,19 @@
         }
       },
       loadDB() {
-        if (this.dos) {
-          let count = this.dos.readFileFromDB();
+        if (dosInstance) {
+          let count = dosInstance.readFileFromDB();
           this.$message.success(`已加载${count}个文件`);
         }
-      },
+      },*/
       exportDB() {
-        if (this.dos) {
-          this.dos.exportSaveFile();
+        if (dosInstance) {
+          dosInstance.exportSaveFile();
         }
       },
       importDB() {
-        if (this.dos) {
-          this.dos.importSaveFile((count) => {
+        if (dosInstance) {
+          dosInstance.importSaveFile((count) => {
             if (count >= 0) {
               this.$message.success(`成功导入${count}个文件`);
             } else if (count == -1) {
@@ -277,6 +277,8 @@
         }
         //移动摇杆圆点
         let moveDirectionBtn = (x, y) => {
+          //禁用摇杆移动
+          return;
           directionBtn.style.left = x - directionBtn.offsetWidth / 2 + 'px'
           directionBtn.style.top = y - directionBtn.offsetHeight / 2 + 'px'
         }

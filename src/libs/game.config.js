@@ -6,7 +6,6 @@ export default {
     title:'仙剑奇侠传一',
     file:'pal.zip',
     command:'PAL!',
-    poster:'pal.webp',
-    saveFile:/.rpg$/
+    poster:'pal.webp'
   }]
 }

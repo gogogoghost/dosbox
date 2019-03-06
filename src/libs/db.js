@@ -40,6 +40,10 @@ export default class GameDB {
   delete(key){
     return this.db[this.gameName].where('name').equals(key).delete()
   }
+
+  deleteAll(){
+    return this.db[this.gameName].where('name').notEqual('').delete();
+  }
 }
 
 

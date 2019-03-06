@@ -9,7 +9,7 @@
             <div class="header flex-ver-center">
               <img src="@/assets/dosbox.webp">
               <div>
-                DOSBOX GAME
+                DOSBOX GAME MOBILE
               </div>
             </div>
 
@@ -48,12 +48,12 @@
                   <el-col :xs="8" :sm="6" :md="12" :xl="8">
                     <el-button @click="reloadGame" :disabled="!runningGame" type="info" size="small">重新加载</el-button>
                   </el-col>
-                  <!--<el-col :xs="8" :sm="6" :md="12" :xl="8">-->
-                    <!--<el-button @click="saveDB" :disabled="!runningGame" type="info" size="small">保存存档</el-button>-->
-                  <!--</el-col>-->
-                  <!--<el-col :xs="8" :sm="6" :md="12" :xl="8">-->
-                    <!--<el-button @click="loadDB" :disabled="!runningGame" type="info" size="small">加载存档</el-button>-->
-                  <!--</el-col>-->
+                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
+                    <el-button @click="screenshot" :disabled="!runningGame" type="info" size="small">保存截图</el-button>
+                  </el-col>
+                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
+                    <el-button @click="clearDB" :disabled="!runningGame" type="info" size="small">清空存档</el-button>
+                  </el-col>
                   <el-col :xs="8" :sm="6" :md="12" :xl="8">
                     <el-button @click="exportDB" :disabled="!runningGame" type="info" size="small">导出存档</el-button>
                   </el-col>
@@ -83,7 +83,6 @@
             </div>
           </div>
 
-
         </el-col>
       </el-scrollbar>
     </el-row>
@@ -104,11 +103,12 @@
 <script>
   import dosbox from './libs/dosbox'
   import gameConfig from './libs/game.config'
+  import download from './libs/download'
+  import {MessageBox} from 'element-ui'
 
-  
+
   let dosInstance=null;
   export default {
-    name: 'app',
     data() {
       return {
         baseUrl: gameConfig.posterBaseUrl,
@@ -189,6 +189,29 @@
           dosInstance.exit();
           this.runGame(this.runningGame);
         }
+      },
+      screenshot(){
+        dosInstance.screenshot()
+          .then(data=>{
+            let byteString = atob(data.split(',')[1]);
+            let ab = new ArrayBuffer(byteString.length);
+            let ia = new Uint8Array(ab);
+
+            for (let i = 0; i < byteString.length; i++) {
+              ia[i] = byteString.charCodeAt(i);
+            }
+            let blob=new Blob([ab]);
+            download('dos.png',blob);
+          })
+      },
+      clearDB(){
+        MessageBox.confirm('确定要删除所有已保存的存档吗？（当前游戏不受影响）','提示')
+          .then(()=>{
+            if(dosInstance){
+              dosInstance.db.deleteAll();
+            }
+          })
+          .catch(()=>{})
       },
       exportDB() {
         if (dosInstance) {
@@ -400,7 +423,7 @@
     background-color: rgba(0,0,0,.5);
   }
   .main-box {
-    padding-top: 10px;
+    padding: 10px 0;
     .virtual-pad {
       position: absolute;
       width: 100%;

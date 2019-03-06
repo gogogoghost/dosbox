@@ -1,6 +1,7 @@
 import DB from './db'
 import jszip from 'jszip'
 import gameConfig from './game.config'
+import download from './download'
 
 window.zzz=jszip;
 
@@ -103,13 +104,7 @@ export default function(dom,game,onprogress){
             }).then(()=>{
               zip.generateAsync({type:'blob'})
                 .then(blob=>{
-                  let a=document.createElement('a');
-                  a.href=URL.createObjectURL(blob);
-                  a.download=game.name+'.zip';
-                  a.style.display='none';
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
+                  download(game.name+'.zip',blob);
                 })
             })
           },
@@ -204,7 +199,6 @@ export default function(dom,game,onprogress){
             }
           }
         })
-        window.dosbox=dos;
         fs.extract(`${gameConfig.gameBaseUrl}${game.file}`).then(() => {
           dos.db=new DB(game.name);
           dos.readFileFromDB().then(()=>{

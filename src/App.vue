@@ -152,6 +152,9 @@
       //启动游戏
       runGame(game) {
         //let load = this.$utils.showLoading();
+        if(dosInstance){
+          dosInstance.exit();
+        }
         this.loadStage=0;
         this.loadPercent=0;
         this.loadingShown=true;
@@ -187,25 +190,6 @@
           this.runGame(this.runningGame);
         }
       },
-      /*saveDB() {
-        let load = this.$utils.showLoading('保存中');
-        if (dosInstance) {
-          dosInstance.saveFileToDB().then((count) => {
-            load.close();
-            this.$message.success(`成功保存${count}个文件`)
-          }).catch(err => {
-            this.$utils.log(err)
-            load.close();
-            this.$message.error('保存时遇到问题');
-          })
-        }
-      },
-      loadDB() {
-        if (dosInstance) {
-          let count = dosInstance.readFileFromDB();
-          this.$message.success(`已加载${count}个文件`);
-        }
-      },*/
       exportDB() {
         if (dosInstance) {
           dosInstance.exportSaveFile();
@@ -213,15 +197,7 @@
       },
       importDB() {
         if (dosInstance) {
-          dosInstance.importSaveFile((count) => {
-            if (count >= 0) {
-              this.$message.success(`成功导入${count}个文件`);
-            } else if (count == -1) {
-              this.$message.error('文件格式有误');
-            } else if (count == -2) {
-              this.$message.error('非该游戏存档');
-            }
-          })
+          dosInstance.importSaveFile();
         }
       }
     },
@@ -369,7 +345,7 @@
   }
   .game-list {
     & > div:first-child {
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
 
     .game-item {
@@ -424,7 +400,7 @@
     background-color: rgba(0,0,0,.5);
   }
   .main-box {
-    padding: 10px 0;
+    padding-top: 10px;
     .virtual-pad {
       position: absolute;
       width: 100%;

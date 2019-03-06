@@ -15,21 +15,11 @@ export default class GameDB {
 
   /*
   * read files
-  * gameData:{fileName:fileData(arraybuffer)}
   * */
   read(cb){
-    this.db[this.gameName].each((obj)=>{
+    return this.db[this.gameName].each((obj)=>{
       cb(obj.name,obj.files);
     })
-    /*return new Promise((resolve,reject)=>{
-
-      this.db[this.gameName].where('name').equals(this.gameName).first().then(res=>{
-        this.gameData=res?res.files:{};
-        resolve(this.gameData);
-      }).catch(err=>{
-        reject(err);
-      });
-    })*/
   }
 
   /*
@@ -38,39 +28,18 @@ export default class GameDB {
   save(key,value){
     return this.db[this.gameName].put({
         name:key,
-        files:value
+        files:value?value.constructor==Uint8Array?value:new Uint8Array(value):new Uint8Array()
       })
   }
 
+  /**
+   * delete file
+   * @param key
+   * @returns {Dexie.Promise<number>}
+   */
   delete(key){
     return this.db[this.gameName].where('name').equals(key).delete()
   }
-
-  /*
-  * clear all files
-  * */
-  /*clear(){
-    this.gameData={};
-  }*/
-
-  /*
-  * add a file
-  * buffer->arraybuffer
-  * */
-  /*add(name,buffer){
-    this.gameData[name]=buffer;
-  }*/
-
-  /*
-  * foreach
-  * provide arraybuffer
-  * need convert to Uint8array
-  * */
-  /*eachFile(cb){
-    for(let key in this.gameData){
-      cb(key,this.gameData[key]);
-    }
-  }*/
 }
 
 

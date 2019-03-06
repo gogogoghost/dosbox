@@ -2,6 +2,8 @@ import DB from './db'
 import jszip from 'jszip'
 import gameConfig from './game.config'
 
+window.zzz=jszip;
+
 export default function(dom,game,onprogress){
   return new Promise((resolve,reject)=>{
     Dos(dom, {
@@ -88,86 +90,56 @@ export default function(dom,game,onprogress){
           },
           //restore files
           readFileFromDB(){
-            let count=0;
-            this.db.read((name,buf)=>{
-              this.writeFile(name,new Uint8Array(buf));
-              count++;
+            return this.db.read((name,buf)=>{
+              this.writeFile(name,buf);
             })
-            return count;
           },
           //export save file
           exportSaveFile(){
-            /*let obj={
-              name:game.name,
-              db:{}
-            };
-            this.db.eachFile((name,buf)=>{
-              obj.db[name]=Array.prototype.slice.call(new Uint8Array(buf));
-            })*/
             let zip=new jszip();
             this.db.read((name,files)=>{
-              let pathList=name.split('/');
-              let root='';
-              let folder=zip;
-              for(let i=0;i<pathList.length;i++){
-                if(pathList[i]){
-                  root+='/'+pathList[i]
-                  if(i==pathList.length-1){
-                    //the last is file name
-                    console.log(pathList[i]);
-                    folder.file(pathList[i],new Blob([files]),{binary:true})
-                  }else{
-                    console.log('folder',root)
-                    folder=zip.folder(root);
-                  }
-                }
-              }
+              name=name.substring(1,name.length);
+              zip.file(name,files);
+            }).then(()=>{
+              zip.generateAsync({type:'blob'})
+                .then(blob=>{
+                  let a=document.createElement('a');
+                  a.href=URL.createObjectURL(blob);
+                  a.download=game.name+'.zip';
+                  a.style.display='none';
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                })
             })
-            zip.file('test.txt','123456');
-            zip.generateAsync({type:'blob'})
-              .then(blob=>{
-                let a=document.createElement('a');
-                a.href=URL.createObjectURL(blob);
-                a.download=game.name+'.zip';
-                a.style.display='none';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-              })
           },
           //import save file from disk
-          importSaveFile(cb){
+          importSaveFile(){
             let input=document.createElement('input');
             input.type='file';
             input.style.display='none';
             input.addEventListener('change',()=>{
-              if(input.files[0].type!='application/json'){
-                cb(-1);
+              if(input.files[0].type!='application/zip'){
               }else{
                 let reader=new FileReader();
                 reader.onload=()=>{
-                  let obj;
-                  //parse obj
-                  try{
-                    obj=JSON.parse(reader.result)
-                  }catch (e) {
-                    cb(-1);
-                    return;
-                  }
-                  if(obj.name!=game.name){
-                    cb(-2);
-                    return;
-                  }
-                  //restore file
-                  obj.db=obj.db||{}
-                  for(let key in obj.db){
-                    this.db.add(key,new Uint8Array(obj.db[key]).buffer);
-                  }
-                  this.db.save();
-                  let count=this.readFileFromDB();
-                  cb(count);
+                  let zip=new jszip();
+                  zip.loadAsync(reader.result)
+                    .then(zip=>{
+                      for(let name in zip.files){
+                        if(zip.files[name].dir){
+                          continue;
+                        }
+                        zip.file(name).async('uint8array')
+                          .then(data=>{
+                            name='/'+name;
+                            this.saveFileToDB(name,data);
+                            this.writeFile(name,data);
+                          })
+                      }
+                    })
                 }
-                reader.readAsText(input.files[0]);
+                reader.readAsArrayBuffer(input.files[0]);
               }
             })
             document.body.appendChild(input);
@@ -216,43 +188,38 @@ export default function(dom,game,onprogress){
                 }
               })
             }else{
-              let contents=parent[childName].contents;
+
               path=path.substring(0,path.length-1);
               let self=this;
-              Object.defineProperty(parent[childName],'contents',{
+              let time=parent[childName].timestamp;
+              Object.defineProperty(parent[childName],'timestamp',{
                 get(){
-                  return contents;
+                  return time;
                 },
                 set(val){
-                  contents=val;
-                  if(!val){
-                    self.saveFileToDB(path,null);
-                  }else{
-                    if(val.constructor==Uint8Array){
-                      self.saveFileToDB(path,val.buffer);
-                    }
-                  }
+                  time=val;
+                  self.saveFileToDB(path,parent[childName].contents);
                 }
               })
             }
           }
         })
+        window.dosbox=dos;
         fs.extract(`${gameConfig.gameBaseUrl}${game.file}`).then(() => {
           dos.db=new DB(game.name);
-          dos.readFileFromDB();
-          dos.exec(['rescan']).then(()=>{
-            setTimeout(()=>{
+          dos.readFileFromDB().then(()=>{
+            dos.exec(['rescan']).then(()=>{
               dos.listenFS();
-            },1000)
-            resolve(dos);
-            return;
-            dos.exec([game.command]).then(()=>{
-              dos.listenFS();
-              resolve(dos);
-            }).catch(err=>{
-              reject(err);
+              //resolve(dos);
+              //return;
+              dos.exec([game.command]).then(()=>{
+                resolve(dos);
+              }).catch(err=>{
+                reject(err);
+              })
             })
-          })
+          });
+
         }).catch((err)=>{
           reject('extract file error:'+err.toString());
         });

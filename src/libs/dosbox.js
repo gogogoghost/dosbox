@@ -212,6 +212,8 @@ export default function(dom,game,onprogress){
                 reject(err);
               })
             })
+          }).catch(err=>{
+            reject(err);
           });
 
         }).catch((err)=>{

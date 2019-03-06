@@ -2,18 +2,19 @@ import DB from './db'
 import jszip from 'jszip'
 import gameConfig from './game.config'
 import download from './download'
+import config from '../config'
 
-window.zzz=jszip;
 
 export default function(dom,game,onprogress){
   return new Promise((resolve,reject)=>{
+    console.log(config.staticBaseUrl+'libs/js-dos/wdosbox.js')
     Dos(dom, {
       onprogress(stage,total,loaded) {
         onprogress(stage.startsWith('Resolving')?1:2,total,loaded);
       },
       onerror() {},
       log(){},
-      wdosboxUrl:'/static/libs/js-dos/wdosbox.js'
+      wdosboxUrl:config.staticBaseUrl+'libs/js-dos/wdosbox.js'
     }).ready((fs, main) => {
       main([]).then(dos=>{
         Object.assign(dos,{

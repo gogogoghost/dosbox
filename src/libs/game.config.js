@@ -1,6 +1,7 @@
+import config from '../config'
 export default {
-  gameBaseUrl:'/static/games/',
-  posterBaseUrl:'/static/posters/',
+  gameBaseUrl:config.staticBaseUrl+'games/',
+  posterBaseUrl:config.staticBaseUrl+'posters/',
   list:[{
     name:'pal',
     title:'仙剑奇侠传一',

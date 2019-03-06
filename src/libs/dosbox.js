@@ -209,14 +209,16 @@ export default function(dom,game,onprogress){
               dos.exec([game.command]).then(()=>{
                 resolve(dos);
               }).catch(err=>{
-                reject(err);
+                dos.exit();
+                reject('run command error:'+err.toString());
               })
             })
           }).catch(err=>{
-            reject(err);
+            dos.exit();
+            reject('database error:'+err.toString());
           });
-
         }).catch((err)=>{
+          dos.exit();
           reject('extract file error:'+err.toString());
         });
       });

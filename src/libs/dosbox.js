@@ -7,7 +7,6 @@ import config from '../config'
 
 export default function(dom,game,onprogress){
   return new Promise((resolve,reject)=>{
-    console.log(config.staticBaseUrl+'libs/js-dos/wdosbox.js')
     Dos(dom, {
       onprogress(stage,total,loaded) {
         onprogress(stage.startsWith('Resolving')?1:2,total,loaded);

@@ -4,7 +4,6 @@
     <el-row class="full-height">
       <el-scrollbar class="full-height">
         <el-col :xs="24" :md="18" :xl="16" class="container">
-
           <div>
             <div class="header flex-ver-center">
               <img src="@/assets/dosbox.webp">
@@ -12,57 +11,69 @@
                 DOSBOX GAME MOBILE
               </div>
             </div>
+            <div class="main-box">
+              <el-row :gutter="20">
+                <el-col :xs="24" :md="16" :xl="16">
+                  <div ref="wrapper" class="relative">
+                    <canvas ref="main"></canvas>
+                    <div class="virtual-pad">
+                      <div class="direction">
+                        <div>
+                          <span ref="directionBtn"></span>
+                        </div>
+                        <div ref="direction">
+                        </div>
+                      </div>
+                      <div class="key-a flex-center" ref="keyA">
+                        A
+                      </div>
+                      <div class="key-b flex-center" ref="keyB">
+                        B
+                      </div>
+                    </div>
+                    <div class="flex-center full-note hidden" ref="fullNote">
+                      横屏体验更佳哦
+                    </div>
+                  </div>
+                </el-col>
+                <el-col :xs="24" :md="8" :xl="8">
+                  <div class="title flex">
+                    <div class="flex1">
+                      {{runningGame?runningGame.title:'等待选择游戏'}}
+                    </div>
+                    <div class="small-tools flex">
+                      <el-button type="primary" icon="el-icon-zoom-in" size="mini" @click="fullGame"></el-button>
+                      <el-button type="primary" icon="el-icon-refresh" size="mini" @click="reloadGame"></el-button>
+                      <el-button type="primary" icon="el-icon-picture" size="mini" @click="screenshot"></el-button>
+                      <el-button type="primary" icon="el-icon-delete" size="mini" @click="clearDB"></el-button>
+                      <el-button type="primary" icon="el-icon-download" size="mini" @click="exportDB"></el-button>
+                      <el-button type="primary" icon="el-icon-upload2" size="mini" @click="importDB"></el-button>
+                    </div>
+                  </div>
+                  <el-row :gutter="10" class="big-tools">
+                    <el-col :md="12" :xl="8">
+                      <el-button type="primary" @click="fullGame" size="small">全屏游戏</el-button>
+                    </el-col>
+                    <el-col :md="12" :xl="8">
+                      <el-button type="primary" @click="reloadGame" size="small">重新加载</el-button>
+                    </el-col>
+                    <el-col :md="12" :xl="8">
+                      <el-button type="primary" @click="screenshot" size="small">保存截图</el-button>
+                    </el-col>
+                    <el-col :md="12" :xl="8">
+                      <el-button type="primary" @click="clearDB" size="small">清空存档</el-button>
+                    </el-col>
+                    <el-col :md="12" :xl="8">
+                      <el-button type="primary" @click="exportDB" size="small">导出存档</el-button>
+                    </el-col>
+                    <el-col :md="12" :xl="8">
+                      <el-button type="primary" @click="importDB" size="small">导入存档</el-button>
+                    </el-col>
+                  </el-row>
+                </el-col>
+              </el-row>
+            </div>
 
-            <el-row :gutter="20" class="main-box">
-              <el-col :xs="24" :md="16" :xl="16">
-                <div ref="wrapper" class="relative">
-                  <canvas ref="main"></canvas>
-                  <div class="virtual-pad">
-                    <div class="direction">
-                      <div>
-                        <span ref="directionBtn"></span>
-                      </div>
-                      <div ref="direction">
-                      </div>
-                    </div>
-                    <div class="key-a flex-center" ref="keyA">
-                      A
-                    </div>
-                    <div class="key-b flex-center" ref="keyB">
-                      B
-                    </div>
-                  </div>
-                  <div class="flex-center full-note hidden" ref="fullNote">
-                    横屏体验更佳哦
-                  </div>
-                </div>
-              </el-col>
-              <el-col :xs="24" :md="8" :xl="8">
-                <div class="title">
-                  {{runningGame?runningGame.title:'等待选择游戏'}}
-                </div>
-                <el-row :gutter="10">
-                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="fullGame" type="info" size="small">全屏游戏</el-button>
-                  </el-col>
-                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="reloadGame" :disabled="!runningGame" type="info" size="small">重新加载</el-button>
-                  </el-col>
-                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="screenshot" :disabled="!runningGame" type="info" size="small">保存截图</el-button>
-                  </el-col>
-                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="clearDB" :disabled="!runningGame" type="info" size="small">清空存档</el-button>
-                  </el-col>
-                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="exportDB" :disabled="!runningGame" type="info" size="small">导出存档</el-button>
-                  </el-col>
-                  <el-col :xs="8" :sm="6" :md="12" :xl="8">
-                    <el-button @click="importDB" :disabled="!runningGame" type="info" size="small">导入存档</el-button>
-                  </el-col>
-                </el-row>
-              </el-col>
-            </el-row>
 
             <div class="game-list">
 
@@ -75,7 +86,7 @@
               <el-row :gutter="10">
                 <el-col v-for="item,index in gameList" :key="index" :xs="8" :sm="8" :md="6" :xl="6">
                   <div class="game-item" @click="runGame(item)">
-                    <img :src="baseUrl+item.poster" v-if="item.poster">
+                    <img :style="`background-image:url('${baseUrl+item.poster}')`" v-if="item.poster">
                     <div>{{item.title}}</div>
                   </div>
                 </el-col>
@@ -186,32 +197,40 @@
       //重启游戏
       reloadGame() {
         if (dosInstance) {
-          dosInstance.exit();
-          this.runGame(this.runningGame);
+          MessageBox.confirm('重启游戏请确保游戏进度已保存。','提示')
+            .then(()=>{
+              dosInstance.exit();
+              this.runGame(this.runningGame);
+            })
+            .catch(()=>{})
         }
       },
       screenshot(){
-        dosInstance.screenshot()
-          .then(data=>{
-            let byteString = atob(data.split(',')[1]);
-            let ab = new ArrayBuffer(byteString.length);
-            let ia = new Uint8Array(ab);
+        if(dosInstance){
+          dosInstance.screenshot()
+            .then(data=>{
+              let byteString = atob(data.split(',')[1]);
+              let ab = new ArrayBuffer(byteString.length);
+              let ia = new Uint8Array(ab);
 
-            for (let i = 0; i < byteString.length; i++) {
-              ia[i] = byteString.charCodeAt(i);
-            }
-            let blob=new Blob([ab]);
-            download('dos.png',blob);
-          })
+              for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+              }
+              let blob=new Blob([ab]);
+              download('dos.png',blob);
+            })
+        }
       },
       clearDB(){
-        MessageBox.confirm('确定要删除所有已保存的存档吗？（当前游戏不受影响）','提示')
-          .then(()=>{
-            if(dosInstance){
-              dosInstance.db.deleteAll();
-            }
-          })
-          .catch(()=>{})
+        if(dosInstance){
+          MessageBox.confirm('确定要删除所有已保存的存档吗？（当前游戏不受影响）','提示')
+            .then(()=>{
+              if(dosInstance){
+                dosInstance.db.deleteAll();
+              }
+            })
+            .catch(()=>{})
+        }
       },
       exportDB() {
         if (dosInstance) {
@@ -355,11 +374,6 @@
       margin-bottom: 10px;
     }
   }
-
-  .el-input__inner:focus {
-    border-color: #8A8A8A !important;
-    outline: 0;
-  }
 </style>
 <style lang="scss" scoped>
   .loading-text{
@@ -367,6 +381,7 @@
     font-size:17px;
   }
   .game-list {
+    padding:0 10px;
     & > div:first-child {
       margin-bottom: 10px;
     }
@@ -377,9 +392,14 @@
       margin-bottom: 15px;
       border-radius: 5px;
       cursor: pointer;
+      box-shadow: #A8A8A8 0px 0 5px;
 
       img {
         width: 100%;
+        height:0;
+        padding-bottom:56.25%;
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
       }
 
       div {
@@ -391,8 +411,8 @@
 
   .header {
     height: 56px;
-    border-bottom: #8A8A8A solid 1px;
-
+    padding:0 10px;
+    box-shadow: #A8A8A8 0 0 10px;
     img {
       width: 42px;
       margin-left: 10px;
@@ -405,9 +425,17 @@
       color: #8A8A8A;
     }
   }
-
+  .big-tools{
+    display: none;
+  }
   @media only screen and (min-width: 992px) {
     .virtual-pad {
+      display: none;
+    }
+    .big-tools{
+      display: block;
+    }
+    .small-tools{
       display: none;
     }
   }
@@ -423,7 +451,7 @@
     background-color: rgba(0,0,0,.5);
   }
   .main-box {
-    padding: 10px 0;
+    padding: 10px;
     .virtual-pad {
       position: absolute;
       width: 100%;
@@ -525,10 +553,12 @@
     }
 
     .title {
-      text-align: center;
-      font-size: 20px;
-      margin-bottom: 20px;
-      margin-top: 10px;
+      font-size: 18px;
+      margin: 10px 0;
+      button{
+        padding:5px;
+        font-size:18px;
+      }
     }
 
     button {
@@ -544,10 +574,10 @@
 
   .container {
     margin: 0 auto;
-    padding: 0 10px;
     float: none;
     min-height: 100%;
     background-color: #DCDFE6;
+    overflow: hidden;
   }
 
 </style>

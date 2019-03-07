@@ -183,30 +183,52 @@ export default function(dom,game,onprogress){
                 }
               })
             }else{
-
               path=path.substring(0,path.length-1);
               let self=this;
               let time=parent[childName].timestamp;
+              let saveWaitTimer=null;
+              let fileUpdated=false;
               Object.defineProperty(parent[childName],'timestamp',{
                 get(){
                   return time;
                 },
                 set(val){
                   time=val;
-                  self.saveFileToDB(path,parent[childName].contents);
+                  //将短时间内多次写入合并成一个
+                  if(saveWaitTimer){
+                    fileUpdated=true;
+                  }else{
+                    fileUpdated=false;
+                    saveWaitTimer=setInterval(()=>{
+                      if(!fileUpdated){
+                        clearInterval(saveWaitTimer);
+                        saveWaitTimer=null;
+                        self.saveFileToDB(path,parent[childName].contents);
+                      }
+                      fileUpdated=false;
+                    },1000)
+                  }
                 }
               })
             }
           }
         })
+        window.dosbox=dos;
         fs.extract(`${gameConfig.gameBaseUrl}${game.file}`).then(() => {
           dos.db=new DB(game.name);
           dos.readFileFromDB().then(()=>{
             dos.exec(['rescan']).then(()=>{
               dos.listenFS();
+              let command=[];
+              if(game.mount=='cdrom'){
+                command.push('mount d . -t cdrom');
+              }else if(game.mount=='floppy'){
+                command.push('mount d . -t floppy');
+              }
+              //command.push(game.command);
               //resolve(dos);
               //return;
-              dos.exec([game.command]).then(()=>{
+              dos.exec(command).then(()=>{
                 resolve(dos);
               }).catch(err=>{
                 dos.exit();

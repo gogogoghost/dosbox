@@ -86,7 +86,7 @@
               <el-row :gutter="10">
                 <el-col v-for="item,index in gameList" :key="index" :xs="8" :sm="8" :md="6" :xl="6">
                   <div class="game-item" @click="runGame(item)">
-                    <img :style="`background-image:url('${baseUrl+item.poster}')`" v-if="item.poster">
+                    <img :style="`background-image:url('${item.poster?(baseUrl+item.poster):''}')`">
                     <div>{{item.title}}</div>
                   </div>
                 </el-col>
@@ -115,7 +115,7 @@
   import dosbox from './libs/dosbox'
   import gameConfig from './libs/game.config'
   import download from './libs/download'
-  import {MessageBox} from 'element-ui'
+  import {MessageBox,Message} from 'element-ui'
 
 
   let dosInstance=null;
@@ -191,7 +191,7 @@
             //load.close();
             this.loadingShown=false;
             this.$utils.log(err);
-            this.$message.error('加载失败');
+            Message.error('加载失败');
           });
       },
       //重启游戏
@@ -392,7 +392,7 @@
       margin-bottom: 15px;
       border-radius: 5px;
       cursor: pointer;
-      box-shadow: #A8A8A8 0px 0 5px;
+      box-shadow: #66b1ff 0px 0 5px;
 
       img {
         width: 100%;

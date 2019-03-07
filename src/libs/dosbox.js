@@ -206,7 +206,7 @@ export default function(dom,game,onprogress){
                         self.saveFileToDB(path,parent[childName].contents);
                       }
                       fileUpdated=false;
-                    },1000)
+                    },500)
                   }
                 }
               })
@@ -217,23 +217,22 @@ export default function(dom,game,onprogress){
         fs.extract(`${gameConfig.gameBaseUrl}${game.file}`).then(() => {
           dos.db=new DB(game.name);
           dos.readFileFromDB().then(()=>{
-            dos.exec(['rescan']).then(()=>{
-              dos.listenFS();
-              let command=[];
-              if(game.mount=='cdrom'){
-                command.push('mount d . -t cdrom');
-              }else if(game.mount=='floppy'){
-                command.push('mount d . -t floppy');
-              }
-              //command.push(game.command);
-              //resolve(dos);
-              //return;
-              dos.exec(command).then(()=>{
-                resolve(dos);
-              }).catch(err=>{
-                dos.exit();
-                reject('run command error:'+err.toString());
-              })
+            dos.listenFS();
+            let command=['rescan'];
+
+            if(game.mount=='cdrom'){
+              command.push('mount d . -t cdrom');
+            }else if(game.mount=='floppy'){
+              command.push('mount d . -t floppy');
+            }
+
+            command.push(game.command);
+
+            dos.exec(command).then(()=>{
+              resolve(dos);
+            }).catch(err=>{
+              dos.exit();
+              reject('run command error:'+err.toString());
             })
           }).catch(err=>{
             dos.exit();

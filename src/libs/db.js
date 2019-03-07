@@ -9,17 +9,26 @@ export default class GameDB {
     this.db = new Dexie(dbName);
     let obj = {};
     this.db.version(1).stores({
-      gameSave: '++id,game,name'
+      gameSave: 'name'
     });
     this.gameName = gameName;
+  }
+
+  genName(key) {
+    return this.gameName + '_' + key;
+  }
+
+  restoreName(name) {
+    let list = name.split('_');
+    return list.length >= 2 ? list[1] : name;
   }
 
   /*
   * read files
   * */
   read(cb) {
-    return this.db.gameSave.where('game').equals(this.gameName).each((obj) => {
-      cb(obj.name, obj.files);
+    return this.db.gameSave.where('name').startsWith(this.gameName).each((obj) => {
+      cb(this.restoreName(obj.name), obj.files);
     })
   }
 
@@ -27,35 +36,10 @@ export default class GameDB {
   * save files
   * */
   save(key, value) {
-    value=value ? value.constructor == Uint8Array ? value : new Uint8Array(value) : new Uint8Array();
-    return new Promise((resolve,reject)=>{
-      this.db.gameSave.where('game').equals(this.gameName).and((val)=>{
-        if(val.name==key)
-          return true;
-      }).toArray((arr)=>{
-        if(arr.length==0){
-          this.db.gameSave.put({
-            game: this.gameName,
-            name: key,
-            files: value
-          }).then(res=>{
-            resolve(res);
-          }).catch(err=>{
-            reject(err);
-          })
-        }else{
-          this.db.gameSave.where('game').equals(this.gameName).and((val)=>{
-            if(val.name==key)
-              return true;
-          }).modify({
-            files:value
-          }).then(res=>{
-            resolve(res);
-          }).catch(err=>{
-            reject(err);
-          })
-        }
-      })
+    value = value ? value.constructor == Uint8Array ? value : new Uint8Array(value) : new Uint8Array();
+    return this.db.gameSave.put({
+      name: this.genName(key),
+      files: value
     })
   }
 
@@ -65,14 +49,11 @@ export default class GameDB {
    * @returns {Dexie.Promise<number>}
    */
   delete(key) {
-    return this.db.gameSave.where('game').equals(this.gameName).and((val)=>{
-      if(val.name==key)
-        return true;
-    }).delete()
+    return this.db.gameSave.where('name').equals(this.genName(key)).delete()
   }
 
   deleteAll() {
-    return this.db.gameSave.where('game').equals(this.gameName).delete();
+    return this.db.gameSave.where('name').startsWith(this.gameName).delete();
   }
 }
 

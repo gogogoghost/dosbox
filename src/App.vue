@@ -8,7 +8,7 @@
             <div class="header flex-ver-center">
               <img src="@/assets/dosbox.webp">
               <div>
-                DOSBOX GAME MOBILE
+                DOSBOX GAME
               </div>
             </div>
             <div class="main-box">
@@ -105,7 +105,7 @@
       :close-on-press-escape="false">
       <el-progress :text-inside="true" :stroke-width="18" :percentage="loadPercent"></el-progress>
       <div class="text-center loading-text">
-        {{loadStage==1?'加载DOSBOX环境':loadStage==2?'加载游戏包':'请稍候'}}
+        {{loadStage==1?'加载DOSBOX环境':loadStage==2?loadPercent>=99?'解压游戏包':'加载游戏包':'请稍候'}}
       </div>
     </el-dialog>
   </div>
@@ -362,6 +362,10 @@
           }
           this.$refs.fullNote.classList.add('hidden');
         })
+        //设置右键选择
+        this.$refs.main.oncontextmenu=function () {
+          return false;
+        }
       })
     }
   }
@@ -550,6 +554,7 @@
       height:100%;
       background-color: black;
       display: block;
+      cursor:none;
     }
 
     .title {

@@ -15,7 +15,13 @@ export default function(dom,game,onprogress){
       log(){},
       wdosboxUrl:config.staticBaseUrl+'libs/js-dos/wdosbox.js'
     }).ready((fs, main) => {
-      main([]).then(dos=>{
+      fs.createFile('dosbox.conf',`
+            [sdl]
+            autolock=true
+            [cpu]
+            cycles=fixed ${game.speed||3000}
+            `);
+      main(['-conf','dosbox.conf']).then(dos=>{
         Object.assign(dos,{
           //exec some dos command
           exec(args){
@@ -243,6 +249,8 @@ export default function(dom,game,onprogress){
           reject('extract file error:'+err.toString());
         });
       });
+    }).catch(err=>{
+      reject('dosbox error:'+err.toString());
     });
   })
 

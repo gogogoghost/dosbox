@@ -7,13 +7,13 @@ export default {
     title:'仙剑奇侠传一',
     file:'pal.zip',
     command:'PAL!',
-    poster:'pal.webp',
-    mount:'cdrom'
+    poster:'pal.webp'
   },{
     name:'hospital',
     title:'主题医院',
     file:'hospital.zip',
     command:'hospital',
-    mount:'cdrom'
+    mount:'cdrom',
+    speed:30000
   }]
 }

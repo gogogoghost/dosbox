@@ -18,4 +18,4 @@
 
 ### 游戏库
 
-[游戏库列表](https://github.com/gogogoghost/dosbox/blob/master/src/libs/game.config.js)在此，DOSBOX基础功能完善后会添加一批。
+[游戏库列表](https://github.com/gogogoghost/dosbox/blob/master/src/libs/game.json)在此，DOSBOX基础功能完善后会添加一批。

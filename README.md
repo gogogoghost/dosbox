@@ -2,14 +2,20 @@
 
 在网页玩儿DOS游戏(**还没开发完！！！**)
 
-请[点击这里](https://dosbox.gogogoghost.site)去主页
+请[点击这里](https://dos.gogogoghost.site)去主页
 
-## 简介
+基于[js-dos](https://js-dos.com/)搭建的网页dos游戏播放器。
 
-基于[js-dos](https://js-dos.com/)搭建的网页dos游戏播放器，有便捷的游戏体验与存档管理，虽然界面很丑。
+### 存档
 
-功能基本齐全，界面尚在开发，内置游戏库与游戏存档信息，目前仅有仙剑，后续会添加更多游戏。
+支持自动存档，支持导出、导入存档（便于存档修改与备份）
 
-## 移动端
+### 移动端
 
-支持全屏，移动端模拟手柄
+基本的触屏模拟摇杆，A键（Enter），B键（ESC），自定义模拟键盘制作中。
+
+暂不支持移动端模拟鼠标。
+
+### 游戏库
+
+[游戏库列表](https://github.com/gogogoghost/dosbox/blob/master/src/libs/game.config.js)在此，DOSBOX基础功能完善后会添加一批。

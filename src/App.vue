@@ -404,8 +404,12 @@
 </script>
 <style lang="scss">
   .main-box {
-    .el-button {
-      margin-left: 10px !important;
+    .big-tools{
+      .el-button {
+        margin-left:0 !important;
+        margin-right: 10px !important;
+        margin-bottom:10px;
+      }
     }
   }
 </style>

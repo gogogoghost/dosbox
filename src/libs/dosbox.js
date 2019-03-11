@@ -20,7 +20,7 @@ export default function(dom,game,onprogress){
             autolock=false
             sensitivity=100
             [cpu]
-            cycles=fixed ${game.speed||3000}
+            cycles=fixed ${game.cpucy||3000}
             `);
       main(['-conf','dosbox.conf']).then(dos=>{
         Object.assign(dos,{
@@ -111,7 +111,7 @@ export default function(dom,game,onprogress){
             }).then(()=>{
               zip.generateAsync({type:'blob'})
                 .then(blob=>{
-                  download(game.name+'.zip',blob);
+                  download(game.name+'_save.zip',blob);
                 })
             })
           },
@@ -227,11 +227,16 @@ export default function(dom,game,onprogress){
             dos.listenFS();
             let command=['rescan'];
 
-            if(game.mount=='cdrom'){
-              command.push('mount d . -t cdrom');
-            }else if(game.mount=='floppy'){
-              command.push('mount d . -t floppy');
+            if(game.mount){
+              if(game.mount=='cdrom'){
+                command.push('mount d . -t cdrom');
+              }else if(game.mount=='floppy'){
+                command.push('mount d . -t floppy');
+              }else{
+                command.push('imgmount d '+game.mount);
+              }
             }
+
 
             command.push(game.command);
 

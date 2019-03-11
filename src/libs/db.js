@@ -19,8 +19,8 @@ export default class GameDB {
   }
 
   restoreName(name) {
-    let list = name.split('_');
-    return list.length >= 2 ? list[1] : name;
+    let index = name.indexOf('_');
+    return index>=0?name.substring(index+1,name.length):name;
   }
 
   /*

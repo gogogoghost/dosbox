@@ -46,6 +46,22 @@ body{
   text-align: center;
 }
 
+/*超出换行*/
+.break-word {
+  word-break: break-all;
+}
+
+.break-ellipsis{
+  overflow: hidden;
+  text-overflow:ellipsis;
+  white-space: nowrap;
+}
+
+.break-nowrap{
+  white-space: nowrap;
+}
+
+/*超出换行结束*/
 
 .el-scrollbar__view{
   height:100%;

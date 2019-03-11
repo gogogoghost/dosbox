@@ -78,16 +78,16 @@
             <div class="game-list">
 
               <el-input
-                placeholder="搜索内容"
+                placeholder="游戏中文或者英文名"
                 v-model="search">
                 <i slot="prefix" class="el-input__icon el-icon-search"></i>
               </el-input>
 
               <el-row :gutter="10">
                 <el-col v-for="item,index in gameList" :key="index" :xs="8" :sm="8" :md="6" :xl="6">
-                  <div class="game-item" @click="runGame(item)">
+                  <div class="game-item" @click="runGame(item)" v-show="!item.hidden">
                     <img :style="`background-image:url('${item.poster?(baseUrl+item.poster):''}')`">
-                    <div>{{item.title}}</div>
+                    <div class="break-ellipsis">{{item.title}}</div>
                   </div>
                 </el-col>
               </el-row>
@@ -125,13 +125,29 @@
         baseUrl: gameConfig.posterBaseUrl,
         gameList: gameConfig.list,
         search: '',
-        shownList: [],
         //当前游戏信息
         runningGame: null,
         //弹窗信息
         loadingShown:false,
         loadStage:0,
         loadPercent:0,
+      }
+    },
+    watch:{
+      search(){
+        if(this.search){
+          for(let item of this.gameList){
+            if(item.name.indexOf(this.search)>=0||item.title.indexOf(this.search)>=0){
+              item.hidden=false;
+            }else{
+              item.hidden=true;
+            }
+          }
+        }else{
+          for(let item of this.gameList){
+            item.hidden=false;
+          }
+        }
       }
     },
     methods: {
@@ -162,7 +178,7 @@
       },
       //启动游戏
       runGame(game) {
-        //let load = this.$utils.showLoading();
+        document.querySelector('.el-scrollbar__wrap').scrollTop=0;
         if(dosInstance){
           dosInstance.exit();
         }
@@ -182,13 +198,11 @@
             this.loadPercent=parseInt(percent)
           })
           .then((dos) => {
-            //load.close();
             dosInstance = dos;
             this.runningGame = game;
             this.loadingShown=false;
           })
           .catch(err => {
-            //load.close();
             this.loadingShown=false;
             this.$utils.log(err);
             Message.error('加载失败');
@@ -272,6 +286,13 @@
         this.$refs.keyA.addEventListener('touchend', keyUp(13));
         this.$refs.keyB.addEventListener('mouseup', keyUp(27));
         this.$refs.keyB.addEventListener('touchend', keyUp(27));
+
+        this.$refs.keyA.addEventListener('click',function (evt) {
+          evt.stopPropagation();
+        })
+        this.$refs.keyB.addEventListener('click',function (evt) {
+          evt.stopPropagation();
+        })
         //摇杆
         let direction = 0;
         let directionBtn = this.$refs.directionBtn
@@ -307,7 +328,7 @@
         }
         //摇杆移动
         let directActive = (evt) => {
-          if (evt.constructor == TouchEvent) {
+          if (evt.constructor == window.TouchEvent) {
             evt.clientX = evt.targetTouches[0].clientX;
             evt.clientY = evt.targetTouches[0].clientY;
           }
@@ -352,6 +373,9 @@
         this.$refs.direction.addEventListener('touchmove', directionMove)
         this.$refs.direction.addEventListener('mouseup', directionUp)
         this.$refs.direction.addEventListener('touchend', directionUp)
+        this.$refs.direction.addEventListener('click',function (evt) {
+          evt.stopPropagation();
+        })
         //判断全屏 显示全屏提示
         window.addEventListener('resize',()=>{
           if(document.fullscreenElement){
@@ -381,9 +405,7 @@
 <style lang="scss">
   .main-box {
     .el-button {
-      margin-left: 0 !important;
-      margin-right: 10px !important;
-      margin-bottom: 10px;
+      margin-left: 10px !important;
     }
   }
 </style>
@@ -416,7 +438,7 @@
 
       div {
         text-align: center;
-        font-size: 14px;
+        font-size: 12px;
       }
     }
   }
@@ -525,7 +547,7 @@
         position: absolute;
         right: 1.3rem;
         bottom: .5rem;
-        color: #8A8A8A;
+        color: white;
         border-radius: 50%;
         border: #8A8A8A solid 2px;
         width: .75rem;
@@ -542,7 +564,7 @@
         position: absolute;
         right: .5rem;
         bottom: 1rem;
-        color: #8A8A8A;
+        color: white;
         border-radius: 50%;
         border: #8A8A8A solid 2px;
         width: .75rem;

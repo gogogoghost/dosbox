@@ -16,7 +16,7 @@
                 <el-col :xs="24" :md="16" :xl="16">
                   <div ref="wrapper" class="relative">
                     <canvas ref="main"></canvas>
-                    <div class="virtual-pad">
+                    <div class="virtual-pad" ref="pad">
                       <div class="direction">
                         <div>
                           <span ref="directionBtn"></span>
@@ -156,7 +156,7 @@
       fullGame() {
         let el = this.$refs.wrapper;
         let request = el.requestFullScreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-        if (typeof request != "undefined" && request) {
+        if (request) {
           request.call(el);
         }
       },
@@ -362,10 +362,18 @@
           }
           this.$refs.fullNote.classList.add('hidden');
         })
-        //设置右键选择
+        //屏蔽右键选择
         this.$refs.main.oncontextmenu=function () {
           return false;
         }
+        //锁定鼠标
+        this.$refs.pad.addEventListener('click',()=>{
+          let el=this.$refs.main;
+          let request=el.requestPointerLock||el.mozRequestPointerLock||el.webkitRequestPointerLock;
+          if(request){
+            request.call(el);
+          }
+        })
       })
     }
   }
@@ -433,7 +441,7 @@
     display: none;
   }
   @media only screen and (min-width: 992px) {
-    .virtual-pad {
+    .virtual-pad>*{
       display: none;
     }
     .big-tools{
@@ -554,7 +562,6 @@
       height:100%;
       background-color: black;
       display: block;
-      cursor:none;
     }
 
     .title {

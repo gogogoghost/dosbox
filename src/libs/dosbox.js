@@ -17,7 +17,8 @@ export default function(dom,game,onprogress){
     }).ready((fs, main) => {
       fs.createFile('dosbox.conf',`
             [sdl]
-            autolock=true
+            autolock=false
+            sensitivity=100
             [cpu]
             cycles=fixed ${game.speed||3000}
             `);

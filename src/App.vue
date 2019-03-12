@@ -1,9 +1,9 @@
 <template>
-  <div class="wrapper">
+  <div class="wrapper" id="app">
 
     <el-row class="full-height">
       <el-scrollbar class="full-height">
-        <el-col :xs="24" :md="18" :xl="16" class="container">
+        <el-col :xs="24" :md="22" :xl="18" class="container">
           <div>
             <div class="header flex-ver-center">
               <img src="@/assets/dosbox.webp">
@@ -16,21 +16,7 @@
                 <el-col :xs="24" :md="16" :xl="16">
                   <div ref="wrapper" class="relative">
                     <canvas ref="main"></canvas>
-                    <div class="virtual-pad" ref="pad">
-                      <div class="direction">
-                        <div>
-                          <span ref="directionBtn"></span>
-                        </div>
-                        <div ref="direction">
-                        </div>
-                      </div>
-                      <div class="key-a flex-center" ref="keyA">
-                        A
-                      </div>
-                      <div class="key-b flex-center" ref="keyB">
-                        B
-                      </div>
-                    </div>
+                    <Pad></Pad>
                     <div class="flex-center full-note hidden" ref="fullNote">
                       横屏体验更佳哦
                     </div>
@@ -52,22 +38,22 @@
                   </div>
                   <el-row :gutter="10" class="big-tools">
                     <el-col :md="12" :xl="8">
-                      <el-button type="primary" @click="fullGame" size="small">全屏游戏</el-button>
+                      <el-button type="primary" @click="fullGame">全屏游戏</el-button>
                     </el-col>
                     <el-col :md="12" :xl="8">
-                      <el-button type="primary" @click="reloadGame" size="small">重新加载</el-button>
+                      <el-button type="primary" @click="reloadGame">重新加载</el-button>
                     </el-col>
                     <el-col :md="12" :xl="8">
-                      <el-button type="primary" @click="screenshot" size="small">保存截图</el-button>
+                      <el-button type="primary" @click="screenshot">保存截图</el-button>
                     </el-col>
                     <el-col :md="12" :xl="8">
-                      <el-button type="primary" @click="clearDB" size="small">清空存档</el-button>
+                      <el-button type="primary" @click="clearDB">清空存档</el-button>
                     </el-col>
                     <el-col :md="12" :xl="8">
-                      <el-button type="primary" @click="exportDB" size="small">导出存档</el-button>
+                      <el-button type="primary" @click="exportDB">导出存档</el-button>
                     </el-col>
                     <el-col :md="12" :xl="8">
-                      <el-button type="primary" @click="importDB" size="small">导入存档</el-button>
+                      <el-button type="primary" @click="importDB">导入存档</el-button>
                     </el-col>
                   </el-row>
                 </el-col>
@@ -84,13 +70,21 @@
               </el-input>
 
               <el-row :gutter="10">
-                <el-col v-for="item,index in gameList" :key="index" :xs="8" :sm="8" :md="6" :xl="6">
-                  <div class="game-item" @click="runGame(item)" v-show="!item.hidden">
+                <el-col v-for="item,index in shownList" :key="index" :xs="8" :sm="8" :md="6" :xl="6">
+                  <div class="game-item" @click="runGame(item)">
                     <img :style="`background-image:url('${item.poster?(baseUrl+item.poster):''}')`">
                     <div class="break-ellipsis">{{item.title}}</div>
                   </div>
                 </el-col>
               </el-row>
+              <el-pagination
+                layout="prev,pager,next"
+                :total="pagerTotal.length"
+                :page-size="pageSize"
+                :pager-count="7"
+                :current-page.sync="currentPage"
+                background>
+              </el-pagination>
             </div>
           </div>
 
@@ -116,10 +110,14 @@
   import gameConfig from './libs/game.config'
   import download from './libs/download'
   import {MessageBox,Message} from 'element-ui'
+  import Pad from './components/pad'
 
 
   let dosInstance=null;
   export default {
+    components:{
+      Pad
+    },
     data() {
       return {
         baseUrl: gameConfig.posterBaseUrl,
@@ -131,22 +129,35 @@
         loadingShown:false,
         loadStage:0,
         loadPercent:0,
+        pageSize:12,
+        currentPage:1
       }
     },
-    watch:{
-      search(){
-        if(this.search){
-          for(let item of this.gameList){
-            if(item.name.indexOf(this.search)>=0||item.title.indexOf(this.search)>=0){
-              item.hidden=false;
-            }else{
-              item.hidden=true;
-            }
+    computed:{
+      pagerTotal:{
+        get(){
+          if(!this.search){
+            return this.gameList
           }
-        }else{
+          let list=[];
           for(let item of this.gameList){
-            item.hidden=false;
+            if(item.name.indexOf(this.search)>=0||item.title.indexOf(this.search)>=0)
+              list.push(item);
           }
+          return list;
+        }
+      },
+      shownList:{
+        get(){
+          let start=(this.currentPage-1)*this.pageSize
+          let end=start+this.pageSize;
+          let list=[];
+          for(let i=start;i<end&&i<this.pagerTotal.length;i++){
+            if(list.length==this.pageSize)
+              break;
+            list.push(this.pagerTotal[i]);
+          }
+          return list;
         }
       }
     },
@@ -259,123 +270,6 @@
     },
     mounted() {
       this.$nextTick(() => {
-        //给按钮赋予事件 A B
-        let keyDown = (keyCode) => {
-          let self = this;
-          return function (evt) {
-            evt.target.classList.add('key-touch');
-            self.downKey(keyCode)
-            evt.preventDefault();
-          }
-        }
-        let keyUp = (keyCode) => {
-          let self = this;
-          return function (evt) {
-            evt.target.classList.remove('key-touch')
-            self.upKey(keyCode)
-            evt.preventDefault();
-          }
-        }
-        this.$refs.keyA.addEventListener('mousedown', keyDown(13));
-        this.$refs.keyA.addEventListener('touchstart', keyDown(13));
-        this.$refs.keyB.addEventListener('mousedown', keyDown(27));
-        this.$refs.keyB.addEventListener('touchstart', keyDown(27));
-
-
-        this.$refs.keyA.addEventListener('mouseup', keyUp(13));
-        this.$refs.keyA.addEventListener('touchend', keyUp(13));
-        this.$refs.keyB.addEventListener('mouseup', keyUp(27));
-        this.$refs.keyB.addEventListener('touchend', keyUp(27));
-
-        this.$refs.keyA.addEventListener('click',function (evt) {
-          evt.stopPropagation();
-        })
-        this.$refs.keyB.addEventListener('click',function (evt) {
-          evt.stopPropagation();
-        })
-        //摇杆
-        let direction = 0;
-        let directionBtn = this.$refs.directionBtn
-        let getDirection = (x, y) => {
-          if (x < 0 && x < y && y <= -x) {
-            //left
-            return 37;
-          } else if (y > 0 && -y < x && x <= y) {
-            //top
-            return 38;
-          } else if (x > 0 && -x <= y && y < x) {
-            //right
-            return 39;
-          } else if (y < 0 && y <= x && x < -y) {
-            //bottom
-            return 40;
-          } else {
-            //default left
-            return 0;
-          }
-        }
-        //移动摇杆圆点
-        let moveDirectionBtn = (x, y) => {
-          //禁用摇杆移动
-          return;
-          directionBtn.style.left = x - directionBtn.offsetWidth / 2 + 'px'
-          directionBtn.style.top = y - directionBtn.offsetHeight / 2 + 'px'
-        }
-        //摇杆归位
-        let resetDirectionBtn = () => {
-          directionBtn.style.left = '';
-          directionBtn.style.top = '';
-        }
-        //摇杆移动
-        let directActive = (evt) => {
-          if (evt.constructor == window.TouchEvent) {
-            evt.clientX = evt.targetTouches[0].clientX;
-            evt.clientY = evt.targetTouches[0].clientY;
-          }
-          let dom = evt.target;
-          let rect = dom.getBoundingClientRect();
-          let x = -(dom.offsetWidth / 2 + rect.left - evt.clientX)
-          let y = dom.offsetHeight / 2 + rect.top - evt.clientY
-          changeDirection(getDirection(x, y));
-
-          moveDirectionBtn(evt.clientX - rect.left, evt.clientY - rect.top);
-        }
-        let changeDirection = (mDirection) => {
-          if (mDirection != direction) {
-            if (direction != 0) {
-              this.upKey(direction);
-            }
-            if (mDirection != 0) {
-              this.downKey(mDirection)
-            }
-            direction = mDirection
-          }
-        }
-        //事件
-        let directionDown = function (evt) {
-          directActive(evt);
-          evt.preventDefault();
-        }
-        let directionMove = function (evt) {
-          if (!direction)
-            return;
-          directActive(evt);
-          evt.preventDefault();
-        }
-        let directionUp = function (evt) {
-          changeDirection(0);
-          resetDirectionBtn();
-          evt.preventDefault();
-        }
-        this.$refs.direction.addEventListener('mousedown', directionDown)
-        this.$refs.direction.addEventListener('touchstart', directionDown)
-        this.$refs.direction.addEventListener('mousemove', directionMove)
-        this.$refs.direction.addEventListener('touchmove', directionMove)
-        this.$refs.direction.addEventListener('mouseup', directionUp)
-        this.$refs.direction.addEventListener('touchend', directionUp)
-        this.$refs.direction.addEventListener('click',function (evt) {
-          evt.stopPropagation();
-        })
         //判断全屏 显示全屏提示
         window.addEventListener('resize',()=>{
           if(document.fullscreenElement){
@@ -385,18 +279,6 @@
             }
           }
           this.$refs.fullNote.classList.add('hidden');
-        })
-        //屏蔽右键选择
-        this.$refs.main.oncontextmenu=function () {
-          return false;
-        }
-        //锁定鼠标
-        this.$refs.pad.addEventListener('click',()=>{
-          let el=this.$refs.main;
-          let request=el.requestPointerLock||el.mozRequestPointerLock||el.webkitRequestPointerLock;
-          if(request){
-            request.call(el);
-          }
         })
       })
     }
@@ -410,6 +292,11 @@
         margin-right: 10px !important;
         margin-bottom:10px;
       }
+    }
+  }
+  .wrapper{
+    .el-pagination{
+      padding:0 0 20px 0;
     }
   }
 </style>
@@ -467,9 +354,6 @@
     display: none;
   }
   @media only screen and (min-width: 992px) {
-    .virtual-pad>*{
-      display: none;
-    }
     .big-tools{
       display: block;
     }
@@ -490,98 +374,6 @@
   }
   .main-box {
     padding: 10px;
-    .virtual-pad {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      z-index: 999;
-      top: 0;
-
-      .direction {
-        position: absolute;
-        bottom: .2rem;
-        left: .2rem;
-        width: 1.6rem;
-        height: 1.6rem;
-        border: #8A8A8A solid 2px;
-        border-radius: 50%;
-        opacity: .5;
-        background-color: #9D9D9D66;
-        span {
-          position: absolute;
-          left: .6rem;
-          top: .6rem;
-          height: .4rem;
-          width: .4rem;
-          background-color: #8A8A8A;
-          border-radius: 50%;
-        }
-
-        & > div:last-child {
-          width: 100%;
-          height: 100%;
-          position: relative;
-          border-radius: 50%;
-        }
-
-        &:before {
-          content: '';
-          position: absolute;
-          top: 50%;
-          height: 0;
-          width: 100%;
-          left: 0;
-          border-top: #8A8A8A solid 2px;
-          transform: rotateZ(45deg);
-        }
-
-        &:after {
-          content: '';
-          position: absolute;
-          top: 50%;
-          height: 0;
-          width: 100%;
-          left: 0;
-          border-top: #8A8A8A solid 2px;
-          transform: rotateZ(-45deg);
-        }
-      }
-
-      .key-a {
-        position: absolute;
-        right: 1.3rem;
-        bottom: .5rem;
-        color: white;
-        border-radius: 50%;
-        border: #8A8A8A solid 2px;
-        width: .75rem;
-        height: .75rem;
-        opacity: .5;
-        font-weight: bold;
-        font-size: .24rem;
-        background-color: #9D9D9D66;
-      }
-
-      .key-b {
-        font-size: .24rem;
-        font-weight: bold;
-        position: absolute;
-        right: .5rem;
-        bottom: 1rem;
-        color: white;
-        border-radius: 50%;
-        border: #8A8A8A solid 2px;
-        width: .75rem;
-        height: .75rem;
-        opacity: .5;
-        background-color: #9D9D9D66;
-      }
-
-      .key-touch {
-        background-color: #8A8A8A;
-        color: #DCDCDC;
-      }
-    }
 
     canvas {
       width: 100%;
@@ -593,6 +385,7 @@
     .title {
       font-size: 18px;
       margin: 10px 0;
+      color:#6D6D6D;
       button{
         padding:5px;
         font-size:18px;

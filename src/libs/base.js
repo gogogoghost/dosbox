@@ -1,6 +1,9 @@
 import Vue from 'vue'
 
 Vue.prototype.$utils={
+  globalData:{
+
+  },
   showLoading(msg){
     return Vue.prototype.$loading({
       lock:true,

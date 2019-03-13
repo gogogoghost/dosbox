@@ -16,7 +16,7 @@
                 <el-col :xs="24" :md="16" :xl="16">
                   <div ref="wrapper" class="relative">
                     <canvas ref="main"></canvas>
-                    <Pad></Pad>
+                    <Pad @downkey="downKey" @upkey="upKey" @catchmouse="catchMouse"></Pad>
                     <div class="flex-center full-note hidden" ref="fullNote">
                       横屏体验更佳哦
                     </div>
@@ -162,22 +162,12 @@
       }
     },
     methods: {
-      //按键模拟
-      downKey(keyCode) {
-        let down = new KeyboardEvent('keydown', {
-          keyCode: keyCode,
-          bubbles: true,
-          cancelable: true,
-        });
-        this.$refs.main.dispatchEvent(down);
-      },
-      upKey(keyCode) {
-        let up = new KeyboardEvent('keyup', {
-          keyCode: keyCode,
-          bubbles: true,
-          cancelable: true,
-        });
-        this.$refs.main.dispatchEvent(up);
+      catchMouse(){
+        let el = this.$refs.main;
+        let request = el.requestPointerLock || el.mozRequestPointerLock || el.webkitRequestPointerLock;
+        if (request) {
+          request.call(el);
+        }
       },
       //全屏
       fullGame() {
@@ -266,7 +256,24 @@
         if (dosInstance) {
           dosInstance.importSaveFile();
         }
-      }
+      },
+      //按键模拟
+      downKey(keyCode) {
+        let down = new KeyboardEvent('keydown', {
+          keyCode: keyCode,
+          bubbles: true,
+          cancelable: true,
+        });
+        this.$refs.main.dispatchEvent(down);
+      },
+      upKey(keyCode) {
+        let up = new KeyboardEvent('keyup', {
+          keyCode: keyCode,
+          bubbles: true,
+          cancelable: true,
+        });
+        this.$refs.main.dispatchEvent(up);
+      },
     },
     mounted() {
       this.$nextTick(() => {

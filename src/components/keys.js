@@ -1,0 +1,22 @@
+export default [{
+  name:'↑',
+  key:38
+},{
+  name:'→',
+  key:39
+},{
+  name:'↓',
+  key:40
+},{
+  name:'←',
+  key:37
+},{
+  name:'Enter',
+  key:13
+},{
+  name:'ESC',
+  key:27
+},{
+  name:'Space',
+  key:0
+}]

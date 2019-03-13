@@ -1,164 +1,289 @@
 <template>
-    <div>
-      <div class="virtual-pad" ref="pad">
-        <div class="direction">
-          <div>
-            <span ref="directionBtn"></span>
-          </div>
-          <div ref="direction">
-          </div>
+  <div>
+    <div class="virtual-pad" ref="pad">
+      <div
+        class="direction"
+        :style="getStyle(currentPad.direction)">
+        <div>
+          <span ref="directionBtn"></span>
         </div>
-        <div class="key-a flex-center" ref="keyA">
-          A
-        </div>
-        <div class="key-b flex-center" ref="keyB">
-          B
+        <div @mousedown="directionStart" @touchstart="directionStart"
+             @mousemove="directionMove" @touchmove="directionMove"
+             @mouseup="directionEnd" @touchend="directionEnd"
+             @click.stop="">
         </div>
       </div>
+      <div
+        v-for="key in currentPad.keys"
+        class="key flex-center"
+        :style="getStyle(key)"
+        @mousedown="keyDown($event,key)"
+        @touchstart="keyDown($event,key)"
+        @click.stop=""
+        @mouseup="keyUp($event,key)"
+        @touchend="keyUp($event,key)">
+        {{key.text}}
+      </div>
+      <div class="edit-pad flex-center" @click.stop="" v-show="editMode">
+        <div class="flex-ver-center">
+          {{`${padSelectedIndex+1}/${padList.length}`}}
+          <i class="el-icon-caret-top" @click="beforePad"></i>
+          <input v-model="currentPad.name"></input>
+          <i class="el-icon-caret-bottom" @click="afterPad"></i>
+          <i class="el-icon-plus" @click="addPad"></i>
+          <i class="el-icon-delete" @click="deletePad"></i>
+
+
+          <select v-if="currentKey" v-model="currentKey.key">
+            <option v-for="key in availableKeys" :value="key.key">{{key.name}}</option>
+          </select>
+
+          <select v-else disabled>
+          </select>
+
+          <input v-model="currentKey.text" v-if="currentKey&&!currentKey.isDirection"></input>
+          <input v-else disabled></input>
+          <i class="el-icon-zoom-in" @click="zoomIn"></i>
+          <i class="el-icon-zoom-out" @click="zoomOut"></i>
+          <i class="el-icon-plus"></i>
+          <i class="el-icon-delete"></i>
+        </div>
+      </div>
+      <div class="edit-switch" @click.stop="editMode=!editMode">
+        <i class="el-icon-check" v-if="editMode"></i>
+        <i class="el-icon-edit" v-else></i>
+      </div>
     </div>
+  </div>
 </template>
 
 <script>
-    export default {
-      data(){
-        return{
-          direction:[]
-        }
-      },
-      mounted() {
-        this.$nextTick(()=>{
-          //给按钮赋予事件 A B
-          let keyDown = (keyCode) => {
-            let self = this;
-            return function (evt) {
-              evt.target.classList.add('key-touch');
-              self.downKey(keyCode)
-              evt.preventDefault();
-            }
-          }
-          let keyUp = (keyCode) => {
-            let self = this;
-            return function (evt) {
-              evt.target.classList.remove('key-touch')
-              self.upKey(keyCode)
-              evt.preventDefault();
-            }
-          }
-          this.$refs.keyA.addEventListener('mousedown', keyDown(13));
-          this.$refs.keyA.addEventListener('touchstart', keyDown(13));
-          this.$refs.keyB.addEventListener('mousedown', keyDown(27));
-          this.$refs.keyB.addEventListener('touchstart', keyDown(27));
+  import keys from './keys'
+  import defaultPad from './defaultPad'
+  //方向键临时变量
+  let currentDirection = 0;
+  //移动按键临时变量
+  let moveKeyObj=null;
 
+  //触摸事件
+  if(window.TouchEvent){
+    TouchEvent.prototype.getClientX=function(){
+      return this.targetTouches[0].clientX
+    }
+    TouchEvent.prototype.getClientY=function () {
+      return this.targetTouches[0].clientY
+    }
+  }
+  //滑动事件
+  MouseEvent.prototype.getClientX=function () {
+    return this.clientX
+  }
+  MouseEvent.prototype.getClientY=function () {
+    return this.clientY
+  }
 
-          this.$refs.keyA.addEventListener('mouseup', keyUp(13));
-          this.$refs.keyA.addEventListener('touchend', keyUp(13));
-          this.$refs.keyB.addEventListener('mouseup', keyUp(27));
-          this.$refs.keyB.addEventListener('touchend', keyUp(27));
-
-          this.$refs.keyA.addEventListener('click',function (evt) {
-            evt.stopPropagation();
-          })
-          this.$refs.keyB.addEventListener('click',function (evt) {
-            evt.stopPropagation();
-          })
-          //摇杆
-          let direction = 0;
-          let directionBtn = this.$refs.directionBtn
-          let getDirection = (x, y) => {
-            if (x < 0 && x < y && y <= -x) {
-              //left
-              return 37;
-            } else if (y > 0 && -y < x && x <= y) {
-              //top
-              return 38;
-            } else if (x > 0 && -x <= y && y < x) {
-              //right
-              return 39;
-            } else if (y < 0 && y <= x && x < -y) {
-              //bottom
-              return 40;
-            } else {
-              //default left
-              return 0;
-            }
-          }
-          //移动摇杆圆点
-          let moveDirectionBtn = (x, y) => {
-            //禁用摇杆移动
-            return;
-            directionBtn.style.left = x - directionBtn.offsetWidth / 2 + 'px'
-            directionBtn.style.top = y - directionBtn.offsetHeight / 2 + 'px'
-          }
-          //摇杆归位
-          let resetDirectionBtn = () => {
-            directionBtn.style.left = '';
-            directionBtn.style.top = '';
-          }
-          //摇杆移动
-          let directActive = (evt) => {
-            if (evt.constructor == window.TouchEvent) {
-              evt.clientX = evt.targetTouches[0].clientX;
-              evt.clientY = evt.targetTouches[0].clientY;
-            }
-            let dom = evt.target;
-            let rect = dom.getBoundingClientRect();
-            let x = -(dom.offsetWidth / 2 + rect.left - evt.clientX)
-            let y = dom.offsetHeight / 2 + rect.top - evt.clientY
-            changeDirection(getDirection(x, y));
-
-            moveDirectionBtn(evt.clientX - rect.left, evt.clientY - rect.top);
-          }
-          let changeDirection = (mDirection) => {
-            if (mDirection != direction) {
-              if (direction != 0) {
-                this.upKey(direction);
-              }
-              if (mDirection != 0) {
-                this.downKey(mDirection)
-              }
-              direction = mDirection
-            }
-          }
-          //事件
-          let directionDown = function (evt) {
-            directActive(evt);
-            evt.preventDefault();
-          }
-          let directionMove = function (evt) {
-            if (!direction)
-              return;
-            directActive(evt);
-            evt.preventDefault();
-          }
-          let directionUp = function (evt) {
-            changeDirection(0);
-            resetDirectionBtn();
-            evt.preventDefault();
-          }
-          this.$refs.direction.addEventListener('mousedown', directionDown)
-          this.$refs.direction.addEventListener('touchstart', directionDown)
-          this.$refs.direction.addEventListener('mousemove', directionMove)
-          this.$refs.direction.addEventListener('touchmove', directionMove)
-          this.$refs.direction.addEventListener('mouseup', directionUp)
-          this.$refs.direction.addEventListener('touchend', directionUp)
-          this.$refs.direction.addEventListener('click',function (evt) {
-            evt.stopPropagation();
-          })
-        })
-        //锁定鼠标
-        this.$refs.pad.addEventListener('click',()=>{
-          let el=this.$refs.main;
-          let request=el.requestPointerLock||el.mozRequestPointerLock||el.webkitRequestPointerLock;
-          if(request){
-            request.call(el);
-          }
-        })
-        //屏蔽右键选择
-        this.$refs.pad.oncontextmenu=function () {
-          return false;
+  export default {
+    data() {
+      return {
+        //编辑模式
+        editMode:false,
+        //键盘列表
+        padList:[],
+        padSelectedIndex:0,
+        //当前正在编辑的Key
+        currentKey:null,
+        //可用按键
+        availableKeys:keys
+      }
+    },
+    computed:{
+      currentPad:{
+        get(){
+          return this.padList[this.padSelectedIndex]
         }
       }
+    },
+    methods: {
+      //移动按钮方法
+      moveKeyStart(evt){
+        moveKeyObj={
+          x:evt.getClientX(),
+          y:evt.getClientY(),
+        }
+      },
+      moveKeyMove(evt){
+
+      },
+      moveKeyEnd(evt){
+      },
+      //放大缩小
+      zoomIn(){
+        this.currentKey.size+=5;
+      },
+      zoomOut(){
+        this.currentKey.size-=5;
+      },
+      beforePad(){
+        this.padSelectedIndex--;
+        if(this.padSelectedIndex<0)
+          this.padSelectedIndex=this.padList.length-1;
+      },
+      afterPad(){
+        this.padSelectedIndex++;
+        if(this.padSelectedIndex>=this.padList.length)
+          this.padSelectedIndex=0;
+      },
+      deletePad(){
+        this.padList.splice(this.padSelectedIndex,1);
+        this.padSelectedIndex=0;
+        if(this.padList.length==0)
+          this.padList.push(defaultPad())
+      },
+      //添加新键盘
+      addPad(){
+        let pad=defaultPad();
+        pad.name='新增键盘';
+        this.padList.push(pad);
+        this.padSelectedIndex=this.padList.length-1;
+      },
+      getStyle(obj) {
+        let style = '';
+        //加入定位
+        if (obj.left)
+          style += `left:${obj.left / 100}rem;`;
+        if (obj.top)
+          style += `top:${obj.top / 100}rem;`;
+        if (obj.bottom)
+          style += `bottom:${obj.bottom / 100}rem;`;
+        if (obj.right)
+          style += `right:${obj.right / 100}rem;`;
+        //加入size
+        let size = obj.size / 100;
+        style += `width:${size}rem;height:${size}rem;`
+        return style;
+      },
+      keyDown(evt, key) {
+        if(this.editMode){
+          this.currentKey=key;
+          return;
+        }
+        if (evt) {
+          evt.target.classList.add('key-touch');
+          evt.preventDefault();
+        }
+        this.$emit('downkey', key.key)
+      },
+      keyUp(evt, key) {
+        if(this.editMode)
+          return;
+        if (evt) {
+          evt.target.classList.remove('key-touch')
+          evt.preventDefault();
+        }
+        this.$emit('upkey', key.key)
+      },
+      directionStart(evt) {
+        if(this.editMode){
+          let direction=this.getDirection(evt)
+          if(direction<0)
+            return;
+          let self=this;
+          this.currentKey=new Proxy(this.currentPad.direction,{
+            get(target,key){
+              if(key=='key'){
+                return target.key[direction]
+              }else{
+                return target[key]
+              }
+            },
+            set(target,key,value){
+              if(key=='key'){
+                self.currentPad.direction.key[direction]=value;
+              }else{
+                target[key]=value;
+              }
+              return true;
+            }
+          })
+          return;
+        }
+        this.directionActive(evt);
+        evt.preventDefault();
+      },
+      directionMove(evt) {
+        if(this.editMode){
+          return;
+        }
+        if (!currentDirection)
+          return;
+        this.directionActive(evt);
+        evt.preventDefault();
+      },
+      directionEnd(evt) {
+        if(this.editMode)
+          return;
+        this.changeDirection(0);
+        evt.preventDefault();
+      },
+      directionActive(evt) {
+        this.changeDirection(this.currentPad.direction.key[this.getDirection(evt)]||0);
+      },
+      changeDirection(mDirection) {
+        if (mDirection != currentDirection) {
+          if (currentDirection != 0) {
+            this.$emit('upkey', currentDirection);
+          }
+          if (mDirection != 0) {
+            this.$emit('downkey', mDirection)
+          }
+          currentDirection = mDirection
+        }
+      },
+      getDirection(evt) {
+        let dom = evt.target;
+        let rect = dom.getBoundingClientRect();
+        let x=-(dom.offsetWidth / 2 + rect.left - evt.getClientX())
+        let y=dom.offsetHeight / 2 + rect.top - evt.getClientY()
+
+        if (x < 0 && x < y && y <= -x) {
+          //left
+          return 3;
+        } else if (y > 0 && -y < x && x <= y) {
+          //top
+          return 0;
+        } else if (x > 0 && -x <= y && y < x) {
+          //right
+          return 1;
+        } else if (y < 0 && y <= x && x < -y) {
+          //bottom
+          return 2;
+        } else {
+          //default left
+          return -1;
+        }
+      }
+    },
+    mounted() {
+      this.$nextTick(() => {
+        //锁定鼠标
+        this.$refs.pad.addEventListener('click', () => {
+          this.$emit('catchmouse');
+        })
+        //屏蔽右键选择
+        this.$refs.pad.oncontextmenu = function () {
+          return false;
+        }
+      })
+    },
+    created() {
+      let padList=JSON.parse(localStorage['padList']||null)||[];
+      if(padList.length==0){
+        padList.push(defaultPad())
+      }
+      this.padList=padList;
+      this.padSelectedIndex=0;
     }
+  }
 </script>
 
 <style scoped lang="scss">
@@ -167,29 +292,29 @@
       display: none;
     }
   }
+
   .virtual-pad {
     position: absolute;
     width: 100%;
     height: 100%;
     z-index: 999;
+    overflow: hidden;
     top: 0;
 
     .direction {
       position: absolute;
-      bottom: .2rem;
-      left: .2rem;
-      width: 1.6rem;
-      height: 1.6rem;
       border: #8A8A8A solid 2px;
       border-radius: 50%;
       opacity: .5;
       background-color: #9D9D9D66;
+      cursor: pointer;
+
       span {
         position: absolute;
-        left: .6rem;
-        top: .6rem;
-        height: .4rem;
-        width: .4rem;
+        left: 35%;
+        top: 35%;
+        height: 30%;
+        width: 30%;
         background-color: #8A8A8A;
         border-radius: 50%;
       }
@@ -223,40 +348,78 @@
         transform: rotateZ(-45deg);
       }
     }
-
-    .key-a {
+    .key {
       position: absolute;
-      right: 1.3rem;
-      bottom: .5rem;
       color: white;
       border-radius: 50%;
       border: #8A8A8A solid 2px;
-      width: .75rem;
-      height: .75rem;
       opacity: .5;
       font-weight: bold;
       font-size: .24rem;
       background-color: #9D9D9D66;
+      cursor: pointer;
     }
-
-    .key-b {
-      font-size: .24rem;
-      font-weight: bold;
-      position: absolute;
-      right: .5rem;
-      bottom: 1rem;
-      color: white;
-      border-radius: 50%;
-      border: #8A8A8A solid 2px;
-      width: .75rem;
-      height: .75rem;
-      opacity: .5;
-      background-color: #9D9D9D66;
-    }
-
     .key-touch {
       background-color: #8A8A8A;
       color: #DCDCDC;
+    }
+    .edit-switch{
+      position: absolute;
+      top:-.4rem;
+      right:-.4rem;
+      width:.8rem;
+      height:.8rem;
+      border-radius: 50%;
+      border: #8A8A8A solid 2px;
+      opacity: .5;
+      cursor: pointer;
+      i{
+        position: absolute;
+        bottom:.13rem;
+        left:.13rem;
+        color:#8A8A8A;
+        font-size:.24rem;
+      }
+    }
+    .edit-pad{
+      position: absolute;
+      top:-3px;
+      text-align: center;
+      width:100%;
+      &>div{
+        border-radius: 6px;
+        border: #8A8A8A solid 2px;
+        border-top:none;
+        padding:.08rem;
+        color:#8A8A8A;
+        font-size:.24rem;
+        &>input{
+          width:.8rem;
+          padding:.03rem;
+          border-radius: 6px;
+          border:none;
+          color:#8A8A8A;
+          height:.25rem;
+          font-size:.18rem;
+          margin:0 .05rem;
+        }
+        &>select{
+          height:.3rem;
+          width:.7rem;
+          padding:.03rem;
+          border: none;
+          font-size:.18rem;
+          margin-left:.3rem;
+          color:#8A8A8A;
+        }
+        i{
+          background-color: #D0D0D0;
+          border-radius: 3px;
+          margin:.03rem;
+          padding:.03rem;
+          cursor: pointer;
+        }
+      }
     }
   }
 </style>

@@ -1,4 +1,4 @@
-export default [{
+const keys=[{
   name:'↑',
   key:38
 },{
@@ -11,12 +11,22 @@ export default [{
   name:'←',
   key:37
 },{
-  name:'Enter',
+  name:'回车(Enter)',
   key:13
 },{
-  name:'ESC',
+  name:'取消(ESC)',
   key:27
 },{
-  name:'Space',
-  key:0
+  name:'空格(Space)',
+  key:8
 }]
+
+//add A-Z
+for(let i=65;i<=90;i++){
+  keys.push({
+    name:String.fromCharCode(i),
+    key:i
+  })
+}
+
+export default keys

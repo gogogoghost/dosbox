@@ -7,9 +7,10 @@
         <div>
           <span ref="directionBtn"></span>
         </div>
-        <div @mousedown="directionStart" @touchstart="directionStart"
-             @mousemove="directionMove" @touchmove="directionMove"
-             @mouseup="directionEnd" @touchend="directionEnd"
+        <div @mousedown.prevent="directionStart" @touchstart.prevent="directionStart"
+             @mousemove.prevent="directionMove" @touchmove.prevent="directionMove"
+             @mouseup.prevent="directionEnd" @touchend.prevent="directionEnd"
+             @mouseout.prevent="directionEnd" @touchcancel.prevent="directionEnd"
              @click.stop="">
         </div>
       </div>
@@ -17,16 +18,22 @@
         v-for="key in currentPad.keys"
         class="key flex-center"
         :style="getStyle(key)"
-        @mousedown="keyDown($event,key)"
-        @touchstart="keyDown($event,key)"
+        @mousedown.prevent="keyDown($event,key)"
+        @touchstart.prevent="keyDown($event,key)"
         @click.stop=""
-        @mouseup="keyUp($event,key)"
-        @touchend="keyUp($event,key)">
+        @mouseup.prevent="keyUp($event,key)"
+        @mouseout.prevent="keyUp($event,key)"
+        @touchcancel.prevent="keyUp($event,key)"
+        @touchend.prevent="keyUp($event,key)"
+        @mousemove.prevent="keyMove($event)"
+        @touchmove.prevent="keyMove($event)">
         {{key.text}}
       </div>
       <div class="edit-pad flex-center" @click.stop="" v-show="editMode">
         <div class="flex-ver-center">
-          {{`${padSelectedIndex+1}/${padList.length}`}}
+          <span>
+            {{`${padSelectedIndex+1}/${padList.length}`}}
+          </span>
           <i class="el-icon-caret-top" @click="beforePad"></i>
           <input v-model="currentPad.name"></input>
           <i class="el-icon-caret-bottom" @click="afterPad"></i>
@@ -34,19 +41,28 @@
           <i class="el-icon-delete" @click="deletePad"></i>
 
 
-          <select v-if="currentKey" v-model="currentKey.key">
+          <select v-if="currentKey" v-model="currentKey.key" class="key-select">
             <option v-for="key in availableKeys" :value="key.key">{{key.name}}</option>
           </select>
-
-          <select v-else disabled>
+          <select v-else disabled class="key-select">
           </select>
 
-          <input v-model="currentKey.text" v-if="currentKey&&!currentKey.isDirection"></input>
-          <input v-else disabled></input>
+          <input v-model="currentKey.text" v-if="currentKey&&!currentKey.isDirection" class="key-name"></input>
+          <input v-else disabled class="key-name"></input>
+
+          <select v-if="currentKey" v-model="positionRule">
+            <option value="0">左上</option>
+            <option value="1">右上</option>
+            <option value="2">左下</option>
+            <option value="3">右下</option>
+          </select>
+          <select v-else>
+          </select>
+
           <i class="el-icon-zoom-in" @click="zoomIn"></i>
           <i class="el-icon-zoom-out" @click="zoomOut"></i>
-          <i class="el-icon-plus"></i>
-          <i class="el-icon-delete"></i>
+          <i class="el-icon-plus" @click="addKey"></i>
+          <i class="el-icon-delete" @click="deleteKey"></i>
         </div>
       </div>
       <div class="edit-switch" @click.stop="editMode=!editMode">
@@ -93,17 +109,103 @@
         //当前正在编辑的Key
         currentKey:null,
         //可用按键
-        availableKeys:keys
+        availableKeys:keys,
+        //按键定位规则
+        positionRule:0,
+      }
+    },
+    watch:{
+      //编辑模式关闭时，保存数据
+      editMode(){
+        let str=JSON.stringify(this.padList);
+        localStorage['padList']=str;
+      },
+      //当前按键变化时，读取并设置他的位置规则
+      currentKey(){
+        if(this.currentKey){
+          let o=this.currentKey;
+          if(o.left!=undefined&&o.top!=undefined){
+            this.positionRule=0;
+          }else if(o.top!=undefined&&o.right!=undefined){
+            this.positionRule=1;
+          }else if(o.left!=undefined&&o.bottom!=undefined){
+            this.positionRule=2;
+          }else if(o.right!=undefined&&o.bottom!=undefined){
+            this.positionRule=3;
+          }
+        }
+      },
+      //位置规则变化时，设置位置变量
+      positionRule(){
+        if(this.currentKey){
+          let o=this.currentKey;
+          if(this.positionRule==0){
+            if(!(o.left!=undefined&&o.top!=undefined)){
+              o.left=o.left||o.right;
+              o.top=o.top||o.bottom;
+              delete o.right;
+              delete o.bottom;
+            }
+          }else if(this.positionRule==1){
+            if(!(o.right!=undefined&&o.top!=undefined)){
+              o.right=o.right||o.left;
+              o.top=o.top||o.bottom;
+              delete o.left;
+              delete o.bottom;
+            }
+          }else if(this.positionRule==2){
+            if(!(o.left!=undefined&&o.bottom!=undefined)){
+              o.left=o.left||o.right;
+              o.bottom=o.bottom||o.top;
+              delete o.right;
+              delete o.top;
+            }
+          }else if(this.positionRule==3){
+            if(!(o.right!=undefined&&o.bottom!=undefined)){
+              o.right=o.right||o.left;
+              o.bottom=o.bottom||o.top;
+              delete o.left;
+              delete o.top;
+            }
+          }
+        }
       }
     },
     computed:{
       currentPad:{
         get(){
+          this.currentKey=null;
           return this.padList[this.padSelectedIndex]
         }
       }
     },
     methods: {
+      //增加一个key
+      addKey(){
+        let newKey={
+          text:'',
+          size:75,
+          left:300,
+          top:100,
+          key:8
+        }
+        this.currentPad.keys.push(newKey);
+        this.currentKey=newKey;
+      },
+      deleteKey(){
+        if(this.currentKey){
+          if(!this.currentKey.isDirection){
+            let list=this.currentPad.keys
+            for(let i=0;i<list.length;i++){
+              if(list[i]==this.currentKey){
+                list.splice(i,1);
+                this.currentKey=null;
+                break;
+              }
+            }
+          }
+        }
+      },
       //移动按钮方法
       moveKeyStart(evt){
         moveKeyObj={
@@ -112,16 +214,40 @@
         }
       },
       moveKeyMove(evt){
-
+        if(moveKeyObj&&this.currentKey){
+          let moveX=evt.getClientX()-moveKeyObj.x;
+          let moveY=evt.getClientY()-moveKeyObj.y;
+          moveKeyObj.x=evt.getClientX();
+          moveKeyObj.y=evt.getClientY();
+          let o=this.currentKey;
+          let fontSize=parseFloat(getComputedStyle(document.documentElement).fontSize);
+          let x=moveX/fontSize*100;
+          let y=moveY/fontSize*100;
+          if(o.left){
+            o.left+=x
+          }else if(o.right){
+            o.right-=x
+          }
+          if(o.top){
+            o.top+=y
+          }else if(o.bottom){
+            o.bottom-=y
+          }
+        }
       },
-      moveKeyEnd(evt){
+      moveKeyEnd(){
+        moveKeyObj=null;
       },
       //放大缩小
       zoomIn(){
-        this.currentKey.size+=5;
+        if(this.currentKey){
+          this.currentKey.size+=3;
+        }
       },
       zoomOut(){
-        this.currentKey.size-=5;
+        if(this.currentKey){
+          this.currentKey.size-=3;
+        }
       },
       beforePad(){
         this.padSelectedIndex--;
@@ -165,25 +291,31 @@
       keyDown(evt, key) {
         if(this.editMode){
           this.currentKey=key;
+          this.moveKeyStart(evt);
           return;
         }
         if (evt) {
           evt.target.classList.add('key-touch');
-          evt.preventDefault();
         }
         this.$emit('downkey', key.key)
       },
       keyUp(evt, key) {
-        if(this.editMode)
+        if(this.editMode){
+          this.moveKeyEnd();
           return;
+        }
         if (evt) {
           evt.target.classList.remove('key-touch')
-          evt.preventDefault();
         }
         this.$emit('upkey', key.key)
       },
+      keyMove(evt){
+        if(this.editMode)
+          this.moveKeyMove(evt);
+      },
       directionStart(evt) {
         if(this.editMode){
+          this.moveKeyStart(evt);
           let direction=this.getDirection(evt)
           if(direction<0)
             return;
@@ -208,22 +340,22 @@
           return;
         }
         this.directionActive(evt);
-        evt.preventDefault();
       },
       directionMove(evt) {
         if(this.editMode){
+          this.moveKeyMove(evt)
           return;
         }
         if (!currentDirection)
           return;
         this.directionActive(evt);
-        evt.preventDefault();
       },
-      directionEnd(evt) {
-        if(this.editMode)
+      directionEnd() {
+        if(this.editMode){
+          this.moveKeyEnd()
           return;
+        }
         this.changeDirection(0);
-        evt.preventDefault();
       },
       directionActive(evt) {
         this.changeDirection(this.currentPad.direction.key[this.getDirection(evt)]||0);
@@ -267,7 +399,9 @@
       this.$nextTick(() => {
         //锁定鼠标
         this.$refs.pad.addEventListener('click', () => {
-          this.$emit('catchmouse');
+          if(!this.editMode){
+            this.$emit('catchmouse');
+          }
         })
         //屏蔽右键选择
         this.$refs.pad.oncontextmenu = function () {
@@ -392,7 +526,7 @@
         border-top:none;
         padding:.08rem;
         color:#8A8A8A;
-        font-size:.24rem;
+        font-size:.22rem;
         &>input{
           width:.8rem;
           padding:.03rem;
@@ -401,7 +535,9 @@
           color:#8A8A8A;
           height:.25rem;
           font-size:.18rem;
-          margin:0 .05rem;
+        }
+        &>.key-name{
+          width:.3rem;
         }
         &>select{
           height:.3rem;
@@ -409,8 +545,11 @@
           padding:.03rem;
           border: none;
           font-size:.18rem;
-          margin-left:.3rem;
+          margin:0 .03rem;
           color:#8A8A8A;
+        }
+        &>.key-select{
+          margin-left:.2rem;
         }
         i{
           background-color: #D0D0D0;
@@ -418,6 +557,9 @@
           margin:.03rem;
           padding:.03rem;
           cursor: pointer;
+        }
+        span{
+          font-size:.2rem;
         }
       }
     }

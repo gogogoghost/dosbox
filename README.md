@@ -12,10 +12,12 @@
 
 ### 移动端
 
-基本的触屏模拟摇杆，A键（Enter），B键（ESC），自定义模拟键盘制作中。
+现已完全支持模拟键盘按键，支持自定义模拟键盘布局，编辑并保存自定义键盘。
 
 暂不支持移动端模拟鼠标。
 
 ### 游戏库
 
-[游戏库列表](https://github.com/gogogoghost/dosbox/blob/master/src/libs/game.json)在此，DOSBOX基础功能完善后会添加一批。
+[游戏库列表](https://github.com/gogogoghost/dosbox/blob/master/src/libs/game.json)在此。
+
+缺少游戏图片，游戏图片还要爬一波。

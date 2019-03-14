@@ -29,7 +29,7 @@
         @touchmove.prevent="keyMove($event)">
         {{key.text}}
       </div>
-      <div class="edit-pad flex-center" @click.stop="" v-show="editMode">
+      <div class="edit-pad flex-center" v-show="editMode">
         <div class="flex-ver-center">
           <span>
             {{`${padSelectedIndex+1}/${padList.length}`}}

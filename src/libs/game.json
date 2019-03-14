@@ -2176,8 +2176,7 @@
     "title": "仙剑奇侠传",
     "file": "pal.zip",
     "command": "pal",
-    "type": "RPG",
-    "poster": "pal.webp"
+    "type": "RPG"
   },
   {
     "name": "sexedu",

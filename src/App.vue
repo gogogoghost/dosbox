@@ -72,7 +72,7 @@
               <el-row :gutter="10">
                 <el-col v-for="item,index in shownList" :key="index" :xs="8" :sm="8" :md="6" :xl="6">
                   <div class="game-item" @click="runGame(item)">
-                    <img :style="`background-image:url('${item.poster?(baseUrl+item.poster):''}')`">
+                    <img :style="`background-image:url('${baseUrl}${item.name}.webp')`">
                     <div class="break-ellipsis">{{item.title}}</div>
                   </div>
                 </el-col>
@@ -221,9 +221,14 @@
         }
       },
       screenshot(){
+
         if(dosInstance){
-          dosInstance.screenshot()
+          this.$refs.main.toBlob((blob)=>{
+            download(`${this.runningGame.name}.png`,blob);
+          })
+          /*dosInstance.screenshot()
             .then(data=>{
+              console.log('eee')
               let byteString = atob(data.split(',')[1]);
               let ab = new ArrayBuffer(byteString.length);
               let ia = new Uint8Array(ab);
@@ -232,8 +237,8 @@
                 ia[i] = byteString.charCodeAt(i);
               }
               let blob=new Blob([ab]);
-              download('dos.png',blob);
-            })
+
+            })*/
         }
       },
       clearDB(){
@@ -329,7 +334,7 @@
       img {
         width: 100%;
         height:0;
-        padding-bottom:56.25%;
+        padding-bottom:65.5%;
         background-repeat: no-repeat;
         background-size: 100% 100%;
       }

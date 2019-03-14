@@ -2179,6 +2179,14 @@
     "type": "RPG"
   },
   {
+    "name": "palmh",
+    "title": "仙剑奇侠传梦幻版",
+    "file": "palmh.zip",
+    "type": "RPG",
+    "command": "pal",
+    "poster": "pal.webp"
+  },
+  {
     "name": "sexedu",
     "title": "小惠的性知识",
     "file": "sexedu.zip",

@@ -72,7 +72,7 @@
               <el-row :gutter="10">
                 <el-col v-for="item,index in shownList" :key="index" :xs="8" :sm="8" :md="6" :xl="6">
                   <div class="game-item" @click="runGame(item)">
-                    <img :style="`background-image:url('${baseUrl}${item.name}.webp')`">
+                    <img :style="`background-image:url('${baseUrl}${item.poster||(item.name+'.webp')}')`">
                     <div class="break-ellipsis">{{item.title}}</div>
                   </div>
                 </el-col>
@@ -183,6 +183,7 @@
         if(dosInstance){
           dosInstance.exit();
         }
+        location.hash='#'+game.name
         this.loadStage=0;
         this.loadPercent=0;
         this.loadingShown=true;
@@ -202,6 +203,7 @@
             dosInstance = dos;
             this.runningGame = game;
             this.loadingShown=false;
+            document.title=game.title;
           })
           .catch(err => {
             this.loadingShown=false;
@@ -292,6 +294,16 @@
           }
           this.$refs.fullNote.classList.add('hidden');
         })
+        //加载默认游戏
+        let gameName=location.hash.replace('#','');
+        if(gameName){
+          for(let item of this.gameList){
+            if(item.name==gameName){
+              this.runGame(item);
+              break;
+            }
+          }
+        }
       })
     }
   }

@@ -1,35 +1,41 @@
 <template>
   <div>
-    <div class="virtual-pad" ref="pad">
-      <div
-        class="direction"
-        :style="getStyle(currentPad.direction)">
-        <div>
-          <span ref="directionBtn"></span>
+    <div class="virtual-pad" ref="pad"
+         @touchstart.stop="padTouchDown"
+         @touchmove.stop="padTouchMove"
+         @touchend.stop="padTouchEnd"
+         @touchcancel.stop="padTouchEnd">
+      <div v-show="showPad">
+        <div
+          class="direction"
+          :style="getStyle(currentPad.direction)">
+          <div>
+            <span ref="directionBtn"></span>
+          </div>
+          <div @mousedown.prevent.stop="directionStart" @touchstart.prevent.stop="directionStart"
+               @mousemove.prevent.stop="directionMove" @touchmove.prevent.stop="directionMove"
+               @mouseup.prevent.stop="directionEnd" @touchend.prevent.stop="directionEnd"
+               @mouseout.prevent.stop="directionEnd" @touchcancel.prevent.stop="directionEnd"
+               @click.stop="">
+          </div>
         </div>
-        <div @mousedown.prevent="directionStart" @touchstart.prevent="directionStart"
-             @mousemove.prevent="directionMove" @touchmove.prevent="directionMove"
-             @mouseup.prevent="directionEnd" @touchend.prevent="directionEnd"
-             @mouseout.prevent="directionEnd" @touchcancel.prevent="directionEnd"
-             @click.stop="">
+        <div
+          v-for="key in currentPad.keys"
+          class="key flex-center"
+          :style="getStyle(key)"
+          @mousedown.prevent.stop="keyDown($event,key)"
+          @touchstart.prevent.stop="keyDown($event,key)"
+          @click.stop=""
+          @mouseup.prevent.stop="keyUp($event,key)"
+          @mouseout.prevent.stop="keyUp($event,key)"
+          @touchcancel.prevent.stop="keyUp($event,key)"
+          @touchend.prevent.stop="keyUp($event,key)"
+          @mousemove.prevent.stop="keyMove($event)"
+          @touchmove.prevent.stop="keyMove($event)">
+          {{key.text}}
         </div>
       </div>
-      <div
-        v-for="key in currentPad.keys"
-        class="key flex-center"
-        :style="getStyle(key)"
-        @mousedown.prevent="keyDown($event,key)"
-        @touchstart.prevent="keyDown($event,key)"
-        @click.stop=""
-        @mouseup.prevent="keyUp($event,key)"
-        @mouseout.prevent="keyUp($event,key)"
-        @touchcancel.prevent="keyUp($event,key)"
-        @touchend.prevent="keyUp($event,key)"
-        @mousemove.prevent="keyMove($event)"
-        @touchmove.prevent="keyMove($event)">
-        {{key.text}}
-      </div>
-      <div class="edit-pad flex-center" v-show="editMode">
+      <div class="edit-pad flex-center" v-show="editMode" @touchstart.stop @touchmove.stop @touchend.stop>
         <div class="flex-ver-center">
           <span>
             {{`${padSelectedIndex+1}/${padList.length}`}}
@@ -65,9 +71,15 @@
           <i class="el-icon-delete" @click="deleteKey"></i>
         </div>
       </div>
-      <div class="edit-switch" @click.stop="editMode=!editMode">
+      <div class="switch edit-switch" @click.prevent.stop="editMode=!editMode" @touchstart.stop @touchmove.stop
+           @touchend.stop>
         <i class="el-icon-check" v-if="editMode"></i>
         <i class="el-icon-edit" v-else></i>
+      </div>
+      <div class="switch pad-switch" @click.prevent.stop="showPad=!showPad" @touchstart.stop @touchmove.stop
+           @touchend.stop>
+        <i class="el-icon-more" v-if="showPad"></i>
+        <i class="el-icon-more-outline" v-else></i>
       </div>
     </div>
   </div>
@@ -79,22 +91,26 @@
   //方向键临时变量
   let currentDirection = 0;
   //移动按键临时变量
-  let moveKeyObj=null;
+  let moveKeyObj = null;
+  //移动端模拟鼠标
+  let mobilePadTouch = null;
+  //模拟鼠标当前位置
+  let cursorPosition = null;
 
   //触摸事件
-  if(window.TouchEvent){
-    TouchEvent.prototype.getClientX=function(){
-      return this.targetTouches[0].clientX
+  if (window.TouchEvent) {
+    TouchEvent.prototype.getClientX = function () {
+      return this.changedTouches[0].clientX
     }
-    TouchEvent.prototype.getClientY=function () {
-      return this.targetTouches[0].clientY
+    TouchEvent.prototype.getClientY = function () {
+      return this.changedTouches[0].clientY
     }
   }
   //滑动事件
-  MouseEvent.prototype.getClientX=function () {
+  MouseEvent.prototype.getClientX = function () {
     return this.clientX
   }
-  MouseEvent.prototype.getClientY=function () {
+  MouseEvent.prototype.getClientY = function () {
     return this.clientY
   }
 
@@ -102,68 +118,78 @@
     data() {
       return {
         //编辑模式
-        editMode:false,
+        editMode: false,
         //键盘列表
-        padList:[],
-        padSelectedIndex:0,
+        padList: [],
+        padSelectedIndex: 0,
         //当前正在编辑的Key
-        currentKey:null,
+        currentKey: null,
         //可用按键
-        availableKeys:keys,
+        availableKeys: keys,
         //按键定位规则
-        positionRule:0,
+        positionRule: 0,
+        //是否显示键盘
+        showPad: true
       }
     },
-    watch:{
+    watch: {
+      showPad() {
+        if (!this.showPad)
+          this.editMode = false;
+      },
       //编辑模式关闭时，保存数据
-      editMode(){
-        let str=JSON.stringify(this.padList);
-        localStorage['padList']=str;
+      editMode() {
+        if (this.editMode) {
+          this.showPad = true;
+        } else {
+          let str = JSON.stringify(this.padList);
+          localStorage['padList'] = str;
+        }
       },
       //当前按键变化时，读取并设置他的位置规则
-      currentKey(){
-        if(this.currentKey){
-          let o=this.currentKey;
-          if(o.left!=undefined&&o.top!=undefined){
-            this.positionRule=0;
-          }else if(o.top!=undefined&&o.right!=undefined){
-            this.positionRule=1;
-          }else if(o.left!=undefined&&o.bottom!=undefined){
-            this.positionRule=2;
-          }else if(o.right!=undefined&&o.bottom!=undefined){
-            this.positionRule=3;
+      currentKey() {
+        if (this.currentKey) {
+          let o = this.currentKey;
+          if (o.left != undefined && o.top != undefined) {
+            this.positionRule = 0;
+          } else if (o.top != undefined && o.right != undefined) {
+            this.positionRule = 1;
+          } else if (o.left != undefined && o.bottom != undefined) {
+            this.positionRule = 2;
+          } else if (o.right != undefined && o.bottom != undefined) {
+            this.positionRule = 3;
           }
         }
       },
       //位置规则变化时，设置位置变量
-      positionRule(){
-        if(this.currentKey){
-          let o=this.currentKey;
-          if(this.positionRule==0){
-            if(!(o.left!=undefined&&o.top!=undefined)){
-              o.left=o.left||o.right;
-              o.top=o.top||o.bottom;
+      positionRule() {
+        if (this.currentKey) {
+          let o = this.currentKey;
+          if (this.positionRule == 0) {
+            if (!(o.left != undefined && o.top != undefined)) {
+              o.left = o.left || o.right;
+              o.top = o.top || o.bottom;
               delete o.right;
               delete o.bottom;
             }
-          }else if(this.positionRule==1){
-            if(!(o.right!=undefined&&o.top!=undefined)){
-              o.right=o.right||o.left;
-              o.top=o.top||o.bottom;
+          } else if (this.positionRule == 1) {
+            if (!(o.right != undefined && o.top != undefined)) {
+              o.right = o.right || o.left;
+              o.top = o.top || o.bottom;
               delete o.left;
               delete o.bottom;
             }
-          }else if(this.positionRule==2){
-            if(!(o.left!=undefined&&o.bottom!=undefined)){
-              o.left=o.left||o.right;
-              o.bottom=o.bottom||o.top;
+          } else if (this.positionRule == 2) {
+            if (!(o.left != undefined && o.bottom != undefined)) {
+              o.left = o.left || o.right;
+              o.bottom = o.bottom || o.top;
               delete o.right;
               delete o.top;
             }
-          }else if(this.positionRule==3){
-            if(!(o.right!=undefined&&o.bottom!=undefined)){
-              o.right=o.right||o.left;
-              o.bottom=o.bottom||o.top;
+          } else if (this.positionRule == 3) {
+            if (!(o.right != undefined && o.bottom != undefined)) {
+              o.right = o.right || o.left;
+              o.bottom = o.bottom || o.top;
               delete o.left;
               delete o.top;
             }
@@ -171,35 +197,92 @@
         }
       }
     },
-    computed:{
-      currentPad:{
-        get(){
-          this.currentKey=null;
+    computed: {
+      currentPad: {
+        get() {
+          this.currentKey = null;
           return this.padList[this.padSelectedIndex]
         }
       }
     },
     methods: {
+      //移动端触摸代理事件，仅在移动端生效，PC端直接捕获鼠标
+      padTouchDown(evt) {
+        mobilePadTouch = evt;
+        if (!cursorPosition) {
+          cursorPosition = {
+            x: this.$refs.pad.offsetWidth / 2,
+            y: this.$refs.pad.offsetHeight / 2
+          }
+        }
+        cursorPosition.beforeX = cursorPosition.x;
+        cursorPosition.beforeY = cursorPosition.y;
+      },
+      padTouchMove(evt) {
+        if (mobilePadTouch) {
+          this.padTouchMoveCursor(evt)
+          mobilePadTouch = evt;
+        }
+      },
+      padTouchEnd(evt) {
+        if (mobilePadTouch) {
+          this.padTouchMoveCursor(evt)
+          if (cursorPosition.beforeX==cursorPosition.x&&cursorPosition.beforeY==cursorPosition.y) {
+            //触发点击事件
+            let down = new MouseEvent('mousedown', {
+              bubbles: true,
+              cancelable: true,
+              clientX: cursorPosition.x,
+              clientY: cursorPosition.y,
+              buttons:1,
+            })
+            this.$emit('send', down)
+            setTimeout(()=>{
+              let up = new MouseEvent('mouseup', {
+                bubbles: true,
+                cancelable: true,
+                clientX: evt.getClientY(),
+                clientY: evt.getClientY(),
+                buttons:0,
+              })
+              this.$emit('send', up)
+            },200)
+          }
+        }
+        mobilePadTouch = null;
+      },
+      //移动鼠标
+      padTouchMoveCursor(evt) {
+        cursorPosition.x += (evt.getClientX() - mobilePadTouch.getClientX())
+        cursorPosition.y += (evt.getClientY() - mobilePadTouch.getClientY())
+        let mouseMove = new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: cursorPosition.x,
+          clientY: cursorPosition.y
+        })
+        this.$emit('send', mouseMove)
+      },
       //增加一个key
-      addKey(){
-        let newKey={
-          text:'',
-          size:75,
-          left:300,
-          top:100,
-          key:8
+      addKey() {
+        let newKey = {
+          text: '',
+          size: 75,
+          left: 300,
+          top: 100,
+          key: 8
         }
         this.currentPad.keys.push(newKey);
-        this.currentKey=newKey;
+        this.currentKey = newKey;
       },
-      deleteKey(){
-        if(this.currentKey){
-          if(!this.currentKey.isDirection){
-            let list=this.currentPad.keys
-            for(let i=0;i<list.length;i++){
-              if(list[i]==this.currentKey){
-                list.splice(i,1);
-                this.currentKey=null;
+      deleteKey() {
+        if (this.currentKey) {
+          if (!this.currentKey.isDirection) {
+            let list = this.currentPad.keys
+            for (let i = 0; i < list.length; i++) {
+              if (list[i] == this.currentKey) {
+                list.splice(i, 1);
+                this.currentKey = null;
                 break;
               }
             }
@@ -207,70 +290,70 @@
         }
       },
       //移动按钮方法
-      moveKeyStart(evt){
-        moveKeyObj={
-          x:evt.getClientX(),
-          y:evt.getClientY(),
+      moveKeyStart(evt) {
+        moveKeyObj = {
+          x: evt.getClientX(),
+          y: evt.getClientY(),
         }
       },
-      moveKeyMove(evt){
-        if(moveKeyObj&&this.currentKey){
-          let moveX=evt.getClientX()-moveKeyObj.x;
-          let moveY=evt.getClientY()-moveKeyObj.y;
-          moveKeyObj.x=evt.getClientX();
-          moveKeyObj.y=evt.getClientY();
-          let o=this.currentKey;
-          let fontSize=parseFloat(getComputedStyle(document.documentElement).fontSize);
-          let x=moveX/fontSize*100;
-          let y=moveY/fontSize*100;
-          if(o.left){
-            o.left+=x
-          }else if(o.right){
-            o.right-=x
+      moveKeyMove(evt) {
+        if (moveKeyObj && this.currentKey) {
+          let moveX = evt.getClientX() - moveKeyObj.x;
+          let moveY = evt.getClientY() - moveKeyObj.y;
+          moveKeyObj.x = evt.getClientX();
+          moveKeyObj.y = evt.getClientY();
+          let o = this.currentKey;
+          let fontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+          let x = moveX / fontSize * 100;
+          let y = moveY / fontSize * 100;
+          if (o.left) {
+            o.left += x
+          } else if (o.right) {
+            o.right -= x
           }
-          if(o.top){
-            o.top+=y
-          }else if(o.bottom){
-            o.bottom-=y
+          if (o.top) {
+            o.top += y
+          } else if (o.bottom) {
+            o.bottom -= y
           }
         }
       },
-      moveKeyEnd(){
-        moveKeyObj=null;
+      moveKeyEnd() {
+        moveKeyObj = null;
       },
       //放大缩小
-      zoomIn(){
-        if(this.currentKey){
-          this.currentKey.size+=3;
+      zoomIn() {
+        if (this.currentKey) {
+          this.currentKey.size += 3;
         }
       },
-      zoomOut(){
-        if(this.currentKey){
-          this.currentKey.size-=3;
+      zoomOut() {
+        if (this.currentKey) {
+          this.currentKey.size -= 3;
         }
       },
-      beforePad(){
+      beforePad() {
         this.padSelectedIndex--;
-        if(this.padSelectedIndex<0)
-          this.padSelectedIndex=this.padList.length-1;
+        if (this.padSelectedIndex < 0)
+          this.padSelectedIndex = this.padList.length - 1;
       },
-      afterPad(){
+      afterPad() {
         this.padSelectedIndex++;
-        if(this.padSelectedIndex>=this.padList.length)
-          this.padSelectedIndex=0;
+        if (this.padSelectedIndex >= this.padList.length)
+          this.padSelectedIndex = 0;
       },
-      deletePad(){
-        this.padList.splice(this.padSelectedIndex,1);
-        this.padSelectedIndex=0;
-        if(this.padList.length==0)
+      deletePad() {
+        this.padList.splice(this.padSelectedIndex, 1);
+        this.padSelectedIndex = 0;
+        if (this.padList.length == 0)
           this.padList.push(defaultPad())
       },
       //添加新键盘
-      addPad(){
-        let pad=defaultPad();
-        pad.name='新增键盘';
+      addPad() {
+        let pad = defaultPad();
+        pad.name = '新增键盘';
         this.padList.push(pad);
-        this.padSelectedIndex=this.padList.length-1;
+        this.padSelectedIndex = this.padList.length - 1;
       },
       getStyle(obj) {
         let style = '';
@@ -289,50 +372,60 @@
         return style;
       },
       keyDown(evt, key) {
-        if(this.editMode){
-          this.currentKey=key;
+        if (this.editMode) {
+          this.currentKey = key;
           this.moveKeyStart(evt);
           return;
         }
         if (evt) {
           evt.target.classList.add('key-touch');
         }
-        this.$emit('downkey', key.key)
+        let down = new KeyboardEvent('keydown', {
+          keyCode: key.key,
+          bubbles: true,
+          cancelable: true,
+        });
+        this.$emit('send', down)
       },
       keyUp(evt, key) {
-        if(this.editMode){
+        if (this.editMode) {
           this.moveKeyEnd();
           return;
         }
         if (evt) {
           evt.target.classList.remove('key-touch')
         }
-        this.$emit('upkey', key.key)
+        let up = new KeyboardEvent('keyup', {
+          keyCode: key.key,
+          bubbles: true,
+          cancelable: true,
+        });
+        this.$emit('send', up)
       },
-      keyMove(evt){
-        if(this.editMode)
+      keyMove(evt) {
+        if (this.editMode)
           this.moveKeyMove(evt);
       },
       directionStart(evt) {
-        if(this.editMode){
+        if (this.editMode) {
           this.moveKeyStart(evt);
-          let direction=this.getDirection(evt)
-          if(direction<0)
+          let direction = this.getDirection(evt)
+          if (direction < 0)
             return;
-          let self=this;
-          this.currentKey=new Proxy(this.currentPad.direction,{
-            get(target,key){
-              if(key=='key'){
+          let self = this;
+          this.currentKey = new Proxy(this.currentPad.direction, {
+            get(target, key) {
+              if (key == 'key') {
                 return target.key[direction]
-              }else{
+              } else {
                 return target[key]
               }
             },
-            set(target,key,value){
-              if(key=='key'){
-                self.currentPad.direction.key[direction]=value;
-              }else{
-                target[key]=value;
+            set(target, key, value) {
+              if (key == 'key') {
+                self.currentPad.direction.key[direction] = value;
+              } else {
+                target[key] = value;
               }
               return true;
             }
@@ -342,7 +435,7 @@
         this.directionActive(evt);
       },
       directionMove(evt) {
-        if(this.editMode){
+        if (this.editMode) {
           this.moveKeyMove(evt)
           return;
         }
@@ -351,14 +444,14 @@
         this.directionActive(evt);
       },
       directionEnd() {
-        if(this.editMode){
+        if (this.editMode) {
           this.moveKeyEnd()
           return;
         }
         this.changeDirection(0);
       },
       directionActive(evt) {
-        this.changeDirection(this.currentPad.direction.key[this.getDirection(evt)]||0);
+        this.changeDirection(this.currentPad.direction.key[this.getDirection(evt)] || 0);
       },
       changeDirection(mDirection) {
         if (mDirection != currentDirection) {
@@ -374,8 +467,8 @@
       getDirection(evt) {
         let dom = evt.target;
         let rect = dom.getBoundingClientRect();
-        let x=-(dom.offsetWidth / 2 + rect.left - evt.getClientX())
-        let y=dom.offsetHeight / 2 + rect.top - evt.getClientY()
+        let x = -(dom.offsetWidth / 2 + rect.left - evt.getClientX())
+        let y = dom.offsetHeight / 2 + rect.top - evt.getClientY()
 
         if (x < 0 && x < y && y <= -x) {
           //left
@@ -399,7 +492,7 @@
       this.$nextTick(() => {
         //锁定鼠标
         this.$refs.pad.addEventListener('click', () => {
-          if(!this.editMode){
+          if (!this.editMode) {
             this.$emit('catchmouse');
           }
         })
@@ -410,12 +503,12 @@
       })
     },
     created() {
-      let padList=JSON.parse(localStorage['padList']||null)||[];
-      if(padList.length==0){
+      let padList = JSON.parse(localStorage['padList'] || null) || [];
+      if (padList.length == 0) {
         padList.push(defaultPad())
       }
-      this.padList=padList;
-      this.padSelectedIndex=0;
+      this.padList = padList;
+      this.padSelectedIndex = 0;
     }
   }
 </script>
@@ -482,6 +575,7 @@
         transform: rotateZ(-45deg);
       }
     }
+
     .key {
       position: absolute;
       color: white;
@@ -493,73 +587,100 @@
       background-color: #9D9D9D66;
       cursor: pointer;
     }
+
     .key-touch {
       background-color: #8A8A8A;
       color: #DCDCDC;
     }
-    .edit-switch{
+
+    .switch {
       position: absolute;
-      top:-.4rem;
-      right:-.4rem;
-      width:.8rem;
-      height:.8rem;
+      width: .8rem;
+      height: .8rem;
       border-radius: 50%;
       border: #8A8A8A solid 2px;
       opacity: .5;
       cursor: pointer;
-      i{
+
+      i {
         position: absolute;
-        bottom:.13rem;
-        left:.13rem;
-        color:#8A8A8A;
-        font-size:.24rem;
+        color: #8A8A8A;
+        font-size: .24rem;
       }
     }
-    .edit-pad{
+
+    .edit-switch {
+      top: -.4rem;
+      right: -.4rem;
+
+      i {
+        bottom: .13rem;
+        left: .13rem;
+      }
+    }
+
+    .pad-switch {
+      left: -.4rem;
+      top: -.4rem;
+
+      i {
+        right: .13rem;
+        bottom: .13rem;
+      }
+    }
+
+    .edit-pad {
       position: absolute;
-      top:-3px;
+      top: -3px;
       text-align: center;
-      width:100%;
-      &>div{
+      width: 100%;
+
+      & > div {
         border-radius: 6px;
         border: #8A8A8A solid 2px;
-        border-top:none;
-        padding:.08rem;
-        color:#8A8A8A;
-        font-size:.22rem;
-        &>input{
-          width:.8rem;
-          padding:.03rem;
+        border-top: none;
+        padding: .08rem;
+        color: #8A8A8A;
+        font-size: .22rem;
+
+        & > input {
+          width: .8rem;
+          padding: .03rem;
           border-radius: 6px;
-          border:none;
-          color:#8A8A8A;
-          height:.25rem;
-          font-size:.18rem;
-        }
-        &>.key-name{
-          width:.3rem;
-        }
-        &>select{
-          height:.3rem;
-          width:.7rem;
-          padding:.03rem;
           border: none;
-          font-size:.18rem;
-          margin:0 .03rem;
-          color:#8A8A8A;
+          color: #8A8A8A;
+          height: .25rem;
+          font-size: .18rem;
         }
-        &>.key-select{
-          margin-left:.2rem;
+
+        & > .key-name {
+          width: .3rem;
         }
-        i{
+
+        & > select {
+          height: .3rem;
+          width: .7rem;
+          padding: .03rem;
+          border: none;
+          font-size: .18rem;
+          margin: 0 .03rem;
+          color: #8A8A8A;
+        }
+
+        & > .key-select {
+          margin-left: .2rem;
+        }
+
+        i {
           background-color: #D0D0D0;
           border-radius: 3px;
-          margin:.03rem;
-          padding:.03rem;
+          margin: .03rem;
+          padding: .03rem;
           cursor: pointer;
         }
-        span{
-          font-size:.2rem;
+
+        span {
+          font-size: .2rem;
         }
       }
     }

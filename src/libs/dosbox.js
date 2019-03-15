@@ -13,7 +13,8 @@ export default function(dom,game,onprogress){
       },
       onerror() {},
       log(){},
-      wdosboxUrl:config.staticBaseUrl+'libs/js-dos/wdosbox.js'
+      //wdosboxUrl:config.staticBaseUrl+'libs/js-dos/wdosbox.js'
+      wdosboxUrl:'http://127.0.0.1:8082/wdosbox.js'
     }).ready((fs, main) => {
       fs.createFile('dosbox.conf',`
             [sdl]
@@ -148,7 +149,7 @@ export default function(dom,game,onprogress){
             input.click();
             document.body.removeChild(input);
           },
-          listenFS(parent,childName,path){
+          watchFS(parent,childName,path){
             parent=parent||this.dos.FS;
             childName=childName||'root';
             path=path||'/'
@@ -167,7 +168,7 @@ export default function(dom,game,onprogress){
             if(isFolder){
               //is a folder
               for(let key in contents){
-                this.listenFS(contents,key,path+key+'/');
+                this.watchFS(contents,key,path+key+'/');
               }
               let self=this;
               parent[childName].contents=new Proxy(parent[childName].contents,{
@@ -221,11 +222,11 @@ export default function(dom,game,onprogress){
           }
         })
         window.dosbox=dos;
-        fs.extract(`${gameConfig.gameBaseUrl}${game.file}`).then(() => {
-        //fs.extract(`/${game.file}`).then(() => {
+        //fs.extract(`${gameConfig.gameBaseUrl}${game.file}`).then(() => {
+        fs.extract(`http://127.0.0.1:8081/${game.file}`).then(() => {
           dos.db=new DB(game.name);
           dos.readFileFromDB().then(()=>{
-            dos.listenFS();
+            dos.watchFS()
             let command=['rescan'];
 
             if(game.mount){

@@ -16,7 +16,7 @@
                 <el-col :xs="24" :md="16" :xl="16">
                   <div ref="wrapper" class="relative">
                     <canvas ref="main"></canvas>
-                    <Pad @downkey="downKey" @upkey="upKey" @catchmouse="catchMouse"></Pad>
+                    <Pad @catchmouse="catchMouse" @send="sendEvt" v-show="!hidePad"></Pad>
                     <div class="flex-center full-note hidden" ref="fullNote">
                       横屏体验更佳哦
                     </div>
@@ -130,7 +130,8 @@
         loadStage:0,
         loadPercent:0,
         pageSize:12,
-        currentPage:1
+        currentPage:1,
+        hidePad:false
       }
     },
     computed:{
@@ -228,19 +229,6 @@
           this.$refs.main.toBlob((blob)=>{
             download(`${this.runningGame.name}.png`,blob);
           })
-          /*dosInstance.screenshot()
-            .then(data=>{
-              console.log('eee')
-              let byteString = atob(data.split(',')[1]);
-              let ab = new ArrayBuffer(byteString.length);
-              let ia = new Uint8Array(ab);
-
-              for (let i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-              }
-              let blob=new Blob([ab]);
-
-            })*/
         }
       },
       clearDB(){
@@ -264,23 +252,10 @@
           dosInstance.importSaveFile();
         }
       },
-      //按键模拟
-      downKey(keyCode) {
-        let down = new KeyboardEvent('keydown', {
-          keyCode: keyCode,
-          bubbles: true,
-          cancelable: true,
-        });
-        this.$refs.main.dispatchEvent(down);
-      },
-      upKey(keyCode) {
-        let up = new KeyboardEvent('keyup', {
-          keyCode: keyCode,
-          bubbles: true,
-          cancelable: true,
-        });
-        this.$refs.main.dispatchEvent(up);
-      },
+      //辅助发送事件
+      sendEvt(evt){
+        this.$refs.main.dispatchEvent(evt);
+      }
     },
     mounted() {
       this.$nextTick(() => {
@@ -304,6 +279,10 @@
             }
           }
         }
+        //监听鼠标锁定事件
+        document.addEventListener('pointerlockchange', (evt) => {
+          this.hidePad=document.pointerLockElement==this.$refs.main
+        });
       })
     }
   }

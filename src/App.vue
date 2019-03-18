@@ -184,7 +184,7 @@
         if(dosInstance){
           dosInstance.exit();
         }
-        location.hash='#'+game.name
+        //location.hash='#'+game.name
         this.loadStage=0;
         this.loadPercent=0;
         this.loadingShown=true;
@@ -270,7 +270,7 @@
           this.$refs.fullNote.classList.add('hidden');
         })
         //加载默认游戏
-        let gameName=location.hash.replace('#','');
+        /*let gameName=location.hash.replace('#','');
         if(gameName){
           for(let item of this.gameList){
             if(item.name==gameName){
@@ -278,7 +278,7 @@
               break;
             }
           }
-        }
+        }*/
         //监听鼠标锁定事件
         document.addEventListener('pointerlockchange', (evt) => {
           this.hidePad=document.pointerLockElement==this.$refs.main

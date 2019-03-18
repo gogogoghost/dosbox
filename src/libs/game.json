@@ -1806,9 +1806,9 @@
     "type": "AVG"
   },
   {
-    "name": "k2",
+    "name": "k2_none",
     "title": "凯兰蒂亚传奇2",
-    "file": "k2.zip",
+    "file": "k2_none.zip",
     "command": "main",
     "type": "AVG"
   },

@@ -223,7 +223,7 @@ export default function(dom,game,onprogress){
         })
         window.dosbox=dos;
         fs.extract(`${gameConfig.gameBaseUrl}${game.file}`).then(() => {
-        //fs.extract(`http://192.168.2.104:8081/${game.file}`).then(() => {
+        //fs.extract(`/game/${game.file}`).then(() => {
           dos.db=new DB(game.name);
           dos.readFileFromDB().then(()=>{
             dos.watchFS()

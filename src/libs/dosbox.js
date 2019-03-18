@@ -13,8 +13,8 @@ export default function(dom,game,onprogress){
       },
       onerror() {},
       log(){},
-      //wdosboxUrl:config.staticBaseUrl+'libs/js-dos/wdosbox.js'
-      wdosboxUrl:'http://127.0.0.1:8082/wdosbox.js'
+      wdosboxUrl:config.staticBaseUrl+'libs/js-dos/wdosbox.js'
+      //wdosboxUrl:'http://127.0.0.1:8082/wdosbox.js'
     }).ready((fs, main) => {
       fs.createFile('dosbox.conf',`
             [sdl]
@@ -222,8 +222,8 @@ export default function(dom,game,onprogress){
           }
         })
         window.dosbox=dos;
-        //fs.extract(`${gameConfig.gameBaseUrl}${game.file}`).then(() => {
-        fs.extract(`http://127.0.0.1:8081/${game.file}`).then(() => {
+        fs.extract(`${gameConfig.gameBaseUrl}${game.file}`).then(() => {
+        //fs.extract(`http://192.168.2.104:8081/${game.file}`).then(() => {
           dos.db=new DB(game.name);
           dos.readFileFromDB().then(()=>{
             dos.watchFS()

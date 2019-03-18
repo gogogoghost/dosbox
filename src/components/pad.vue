@@ -1,10 +1,10 @@
 <template>
   <div>
     <div class="virtual-pad" ref="pad"
-         @touchstart.stop="padTouchDown"
-         @touchmove.stop="padTouchMove"
-         @touchend.stop="padTouchEnd"
-         @touchcancel.stop="padTouchEnd">
+         @touchstart.prevent.stop="padTouchDown"
+         @touchmove.prevent.stop="padTouchMove"
+         @touchend.prevent.stop="padTouchEnd"
+         @touchcancel.prevent.stop="padTouchEnd">
       <div v-show="showPad">
         <div
           class="direction"
@@ -94,6 +94,8 @@
   let moveKeyObj = null;
   //移动端模拟鼠标
   let mobilePadTouch = null;
+  //移动端模拟鼠标2
+  let mobilePadTouch2=null;
   //模拟鼠标当前位置
   let cursorPosition = null;
 
@@ -208,25 +210,117 @@
     methods: {
       //移动端触摸代理事件，仅在移动端生效，PC端直接捕获鼠标
       padTouchDown(evt) {
-        mobilePadTouch = evt;
-        if (!cursorPosition) {
-          cursorPosition = {
-            x: this.$refs.pad.offsetWidth / 2,
-            y: this.$refs.pad.offsetHeight / 2
+        if(mobilePadTouch){
+          if(!mobilePadTouch2){
+            //第二个手指按下
+            for(let item of evt.changedTouches){
+              if(item.identifier!=mobilePadTouch.identifier){
+                //记录第二个按下点位置
+                mobilePadTouch2=item;
+                break;
+              }
+            }
           }
+        }else{
+          //按下第一个手指
+          mobilePadTouch = evt.changedTouches[0];
+          if (!cursorPosition) {
+            cursorPosition = {
+              x: this.$refs.pad.offsetWidth / 2,
+              y: this.$refs.pad.offsetHeight / 2
+            }
+          }
+          cursorPosition.beforeX = cursorPosition.x;
+          cursorPosition.beforeY = cursorPosition.y;
         }
-        cursorPosition.beforeX = cursorPosition.x;
-        cursorPosition.beforeY = cursorPosition.y;
       },
       padTouchMove(evt) {
-        if (mobilePadTouch) {
-          this.padTouchMoveCursor(evt)
-          mobilePadTouch = evt;
+        if(mobilePadTouch2){
+          //当前有2个手指在滑动，取第二个手指滑动动作，并且附加点下并滑动效果
+          for(let item of evt.changedTouches){
+            if(item.identifier==mobilePadTouch2.identifier){
+              if(!cursorPosition.down){
+                let down = new MouseEvent('mousedown', {
+                  bubbles: true,
+                  cancelable: true,
+                  clientX: cursorPosition.x,
+                  clientY: cursorPosition.y,
+                  buttons:1,
+                })
+                this.$emit('send', down)
+                cursorPosition.down=true;
+              }
+              //并且滑动
+              cursorPosition.x += (item.clientX - mobilePadTouch2.clientX)
+              cursorPosition.y += (item.clientY - mobilePadTouch2.clientY)
+              let mouseMove = new MouseEvent('mousemove', {
+                bubbles: true,
+                cancelable: true,
+                clientX: cursorPosition.x,
+                clientY: cursorPosition.y
+              })
+              this.$emit('send', mouseMove);
+              mobilePadTouch2=item;
+              break;
+            }
+          }
+        }else if(mobilePadTouch) {
+          //当前只有1个手指在滑动，直接滑动
+          for(let item of evt.changedTouches){
+            if(item.identifier==mobilePadTouch.identifier){
+              this.padTouchMoveCursor(item,mobilePadTouch);
+              mobilePadTouch = item;
+              break;
+            }
+          }
         }
       },
       padTouchEnd(evt) {
-        if (mobilePadTouch) {
-          this.padTouchMoveCursor(evt)
+        if(mobilePadTouch2){
+          //有两个触摸
+          if(cursorPosition.down){
+            //曾经点击了的，现在帮忙抬起
+            let up = new MouseEvent('mouseup', {
+              bubbles: true,
+              cancelable: true,
+              clientX: cursorPosition.x,
+              clientY: cursorPosition.y,
+              buttons:0,
+            })
+            this.$emit('send', up);
+            cursorPosition.down=false;
+          }else{
+            //两个手指按下，没有down 松手了，等于点击右键
+            let down = new MouseEvent('mousedown', {
+              bubbles: true,
+              cancelable: true,
+              clientX: cursorPosition.x,
+              clientY: cursorPosition.y,
+              button:2,
+              buttons:2
+            })
+            this.$emit('send', down)
+            setTimeout(()=>{
+              let up = new MouseEvent('mouseup', {
+                bubbles: true,
+                cancelable: true,
+                clientX: cursorPosition.x,
+                clientY: cursorPosition.y,
+                button:2,
+                buttons:0,
+              })
+              this.$emit('send', up)
+            },100)
+          }
+        }else if (mobilePadTouch) {
+          //只有一个触摸，抬起时，移动位置并且判断点击
+          for(let item of evt.changedTouches){
+            if(item.identifier==mobilePadTouch.identifier){
+              this.padTouchMoveCursor(item,mobilePadTouch);
+              break;
+            }
+          }
+          //判断是否移动了，点击
           if (cursorPosition.beforeX==cursorPosition.x&&cursorPosition.beforeY==cursorPosition.y) {
             //触发点击事件
             let down = new MouseEvent('mousedown', {
@@ -241,20 +335,27 @@
               let up = new MouseEvent('mouseup', {
                 bubbles: true,
                 cancelable: true,
-                clientX: evt.getClientY(),
-                clientY: evt.getClientY(),
+                clientX: cursorPosition.x,
+                clientY: cursorPosition.y,
                 buttons:0,
               })
               this.$emit('send', up)
-            },200)
+            },100)
           }
         }
         mobilePadTouch = null;
+        mobilePadTouch2=null;
       },
       //移动鼠标
-      padTouchMoveCursor(evt) {
-        cursorPosition.x += (evt.getClientX() - mobilePadTouch.getClientX())
-        cursorPosition.y += (evt.getClientY() - mobilePadTouch.getClientY())
+      padTouchMoveCursor(nowTouch,beforeTouch) {
+        let x=cursorPosition.x;
+        let y=cursorPosition.y;
+        cursorPosition.x += (nowTouch.clientX - beforeTouch.clientX)
+        cursorPosition.y += (nowTouch.clientY - beforeTouch.clientY)
+        if(x==cursorPosition.x&&y==cursorPosition.y){
+          //鼠标位置没有改变
+          return;
+        }
         let mouseMove = new MouseEvent('mousemove', {
           bubbles: true,
           cancelable: true,
@@ -642,6 +743,7 @@
         padding: .08rem;
         color: #8A8A8A;
         font-size: .22rem;
+        background-color: #00000055;
 
         & > input {
           width: .8rem;

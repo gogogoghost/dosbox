@@ -1,2 +1,2 @@
 const fs = require('fs')
-fs.writeFileSync('./docs/CNAME',fs.readFileSync('CNAME'));
+fs.writeFileSync('./dist/CNAME',fs.readFileSync('CNAME'));

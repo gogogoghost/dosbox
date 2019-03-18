@@ -557,10 +557,20 @@
       changeDirection(mDirection) {
         if (mDirection != currentDirection) {
           if (currentDirection != 0) {
-            this.$emit('upkey', currentDirection);
+            let up = new KeyboardEvent('keyup', {
+              keyCode: currentDirection,
+              bubbles: true,
+              cancelable: true,
+            });
+            this.$emit('send', up);
           }
           if (mDirection != 0) {
-            this.$emit('downkey', mDirection)
+            let down = new KeyboardEvent('keydown', {
+              keyCode: mDirection,
+              bubbles: true,
+              cancelable: true,
+            });
+            this.$emit('send', down)
           }
           currentDirection = mDirection
         }

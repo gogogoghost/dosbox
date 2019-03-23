@@ -2306,7 +2306,7 @@
     "command": "hospital",
     "type": "SIM",
     "mount": "cdrom",
-    "speed":30000
+    "cpucy":30000
   },
   {
     "name": "travel",

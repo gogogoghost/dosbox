@@ -177,7 +177,7 @@ export default function(dom,game,onprogress){
                   //console.log('set:'+path+key)
                   let result=Reflect.set(target,key,value,proxy);
                   if(contents.constructor==Object){
-                    self.listenFS(contents,key,path+key+'/');
+                    self.watchFS(contents,key,path+key+'/');
                   }
                   return result;
                 },

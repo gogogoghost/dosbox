@@ -2305,7 +2305,8 @@
     "file": "hospital.zip",
     "command": "hospital",
     "type": "SIM",
-    "mount": "cdrom"
+    "mount": "cdrom",
+    "speed":30000
   },
   {
     "name": "travel",

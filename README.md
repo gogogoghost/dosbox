@@ -27,4 +27,4 @@
 
 [游戏库列表](https://github.com/gogogoghost/dosbox/blob/master/src/libs/game.json)在此。
 
-缺少游戏图片，游戏图片还要爬一波。
+目前有300多个，有一些无法运行，有图片的都是至少可以跑的。
